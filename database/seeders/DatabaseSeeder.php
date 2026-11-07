@@ -8,6 +8,6 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        // Tambahkan data awal aplikasi di sini.
+        $this->call(PelangganSeeder::class);
     }
 }

@@ -1,8 +1,7 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-
 require __DIR__.'/eco-gui.php';
+require __DIR__.'/meter.php';
 require __DIR__.'/profile.php';
 require __DIR__.'/eco-katalog.php';
 require __DIR__.'/eco-klaim.php';

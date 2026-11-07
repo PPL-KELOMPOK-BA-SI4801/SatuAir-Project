@@ -1,0 +1,54 @@
+// Jalankan dari root repo dengan database demo baru: node tests/browser.cjs
+const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
+const assert = require('node:assert/strict');
+const baseUrl = process.env.METER_TEST_BASE_URL || 'http://127.0.0.1:8001';
+(async () => {
+    const browser = await chromium.launch({channel:'msedge', headless:true});
+    const page = await browser.newPage({viewport:{width:1600,height:1280}});
+    const errors = [];
+    page.on('pageerror', e => errors.push(e.message));
+    assert.equal((await page.goto(baseUrl + '/catat-meter')).status(), 200);
+    await page.getByRole('link',{name:'Catat Rina Marlina',exact:true}).click();
+    assert.equal(await page.locator('input[readonly]').first().inputValue(),'Rina Marlina');
+    assert.equal(await page.locator('#meter-awal').inputValue(),'530,00');
+    await page.getByRole('link',{name:'Batal',exact:true}).click();
+    await page.getByRole('link',{name:'Catat Budi Santoso',exact:true}).click();
+    const formBudi = page.url();
+    assert.equal(await page.locator('input[readonly]').first().inputValue(),'Budi Santoso');
+    assert.equal(await page.locator('#meter-awal').inputValue(),'317,00');
+    const input = page.locator('#meter-akhir');
+    await input.fill('342');
+    assert.equal(await page.locator('#rumus').innerText(),'342,00 − 317,00 = 25,00 m³');
+    await input.fill('317');
+    assert.equal(await page.locator('#total-pemakaian').innerText(),'0,00 m³');
+    for (const value of ['316','abc','-1','']) {
+        await input.fill(value);
+        assert.equal(await page.locator('#total-pemakaian').innerText(),'— m³');
+    }
+    await input.fill('316');
+    await page.getByRole('button',{name:'Simpan Pencatatan'}).click();
+    await page.waitForLoadState('networkidle');
+    assert.match(await page.locator('main').innerText(),/Pencatatan belum disimpan/);
+    assert.equal(await page.locator('#meter-error').innerText(),'Meter akhir tidak boleh lebih kecil dari meter awal.');
+    assert.equal(await page.locator('#meter-form').getAttribute('data-invalid'),'1');
+    assert.equal(await page.locator('#total-pemakaian').innerText(),'— m³');
+    await page.getByRole('link',{name:'Batal',exact:true}).click();
+    await page.getByRole('textbox',{name:'Cari nama atau nomor meter'}).fill('MTR-CBD-002');
+    await page.getByRole('button',{name:'Filter',exact:true}).click();
+    await page.waitForLoadState('networkidle');
+    assert.equal(await page.locator('tbody tr').count(),1);
+    assert.match(await page.locator('tbody').innerText(),/Budi Santoso/);
+    await page.getByRole('textbox',{name:'Cari nama atau nomor meter'}).fill('');
+    await page.getByLabel('Wilayah').selectOption('Dusun I - Cibodas Krajan');
+    await page.getByRole('button',{name:'Filter',exact:true}).click();
+    await page.waitForLoadState('networkidle');
+    assert.equal(await page.locator('tbody tr').count(),1);
+    assert.match(await page.locator('tbody').innerText(),/Rina Marlina/);
+    await page.setViewportSize({width:390,height:844});
+    await page.goto(formBudi);
+    await page.locator('#meter-akhir').fill('342');
+    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth <= innerWidth), true);
+    assert.deepEqual(errors,[]);
+    await browser.close();
+    console.log('PASS browser: HTTP 200, tombol Catat, live 25/0, penolakan server, Batal, filter meter dan wilayah, mobile, tanpa error JS.');
+})().catch(error=>{console.error(error);process.exit(1)});
