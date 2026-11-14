@@ -18,7 +18,7 @@ class LoginController extends Controller
         $data = $request->validate([
             'email' => ['required', 'email'],
             'password' => ['required', 'string'],
-            'role' => ['required', 'in:masyarakat,petugas,bendahara'],
+            'role' => ['required', 'in:masyarakat,petugas,bendahara,admin'],
         ]);
 
         if (! Auth::attempt($request->only('email', 'password'), $request->boolean('remember'))) {
@@ -27,15 +27,19 @@ class LoginController extends Controller
         }
 
         $user = Auth::user();
-        if ($user->role !== $data['role']) {
+        $selectedRole = $data['role'];
+        $roleMatches = $user->role === $selectedRole
+            || (in_array($user->role, ['bendahara', 'admin']) && in_array($selectedRole, ['bendahara', 'admin']));
+
+        if (! $roleMatches) {
             Auth::logout();
             return back()->withInput($request->only('email', 'role'))
-                ->withErrors(['role' => 'Peran yang dipilih tidak sesuai dengan akun.']);
+                ->withErrors(['role' => 'Anda tidak memiliki akses untuk peran ini.']);
         }
 
         $request->session()->regenerate();
         $path = match ($user->role) {
-            'bendahara' => '/bendahara/dashboard',
+            'bendahara', 'admin' => '/bendahara/dashboard',
             'petugas' => '/petugas/dashboard',
             'masyarakat' => '/masyarakat/dashboard',
             default => '/',
