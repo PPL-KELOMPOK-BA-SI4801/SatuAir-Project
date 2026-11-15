@@ -17,6 +17,7 @@ use App\Http\Controllers\Bendahara\DashboardController as BendaharaDashboardCont
 use App\Http\Controllers\Bendahara\RekapController as BendaharaRekapController;
 use App\Http\Controllers\Bendahara\UserController as BendaharaUserController;
 use App\Http\Controllers\Bendahara\ComplaintController as BendaharaComplaintController;
+use App\Http\Controllers\Bendahara\AccessControlController;
 
 /*
 |--------------------------------------------------------------------------
@@ -104,3 +105,9 @@ Route::middleware(['auth', 'role:bendahara', 'permission:finance.manage'])->pref
     Route::get('/pengaduan', [BendaharaComplaintController::class, 'index'])->name('complaints.index');
 });
 
+Route::middleware(['auth', 'role:bendahara', 'permission:access.manage'])
+    ->prefix('bendahara')->name('bendahara.')
+    ->group(function () {
+        Route::get('/hak-akses', [AccessControlController::class, 'index'])->name('access.index');
+        Route::put('/hak-akses/{role}', [AccessControlController::class, 'update'])->name('access.update');
+});

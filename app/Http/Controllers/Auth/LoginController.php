@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Auth;
  * Controller untuk autentikasi login pengguna.
  *
  * Menangani tampilan form login dengan tab pemilihan peran
- * (Masyarakat, Petugas, Admin), proses login, dan logout.
+ * (Masyarakat, Petugas, Bendahara), proses login, dan logout.
  */
 class LoginController extends Controller
 {
@@ -38,7 +38,7 @@ class LoginController extends Controller
         $request->validate([
             'email'    => ['required', 'email'],
             'password' => ['required', 'string'],
-            'role'     => ['required', 'in:masyarakat,petugas,bendahara,admin'],
+            'role'     => ['required', 'in:masyarakat,petugas,bendahara'],
         ], [
             'email.required'    => 'Email wajib diisi.',
             'email.email'       => 'Format email tidak valid.',
@@ -54,11 +54,10 @@ class LoginController extends Controller
 
             $user = Auth::user();
 
-            // Verifikasi peran yang dipilih sesuai dengan peran pengguna (bendahara & admin kompatibel)
+            // Pastikan peran yang dipilih sesuai dengan peran pengguna.
             $userRole = $user->role;
             $reqRole = $request->role;
-            $roleMatches = ($userRole === $reqRole)
-                || (in_array($userRole, ['bendahara', 'admin']) && in_array($reqRole, ['bendahara', 'admin']));
+            $roleMatches = $userRole === $reqRole;
 
             if (!$roleMatches) {
                 Auth::logout();
@@ -81,7 +80,7 @@ class LoginController extends Controller
                 return back()
                     ->withInput($request->only('email', 'role'))
                     ->withErrors([
-                        'email' => 'Akun Anda tidak aktif. Silakan hubungi administrator.',
+                        'email' => 'Akun Anda tidak aktif. Silakan hubungi pengelola.',
                     ]);
             }
 
@@ -121,7 +120,7 @@ class LoginController extends Controller
     protected function redirectPath(string $role): string
     {
         return match ($role) {
-            'bendahara', 'admin' => '/bendahara/dashboard',
+            'bendahara' => '/bendahara/dashboard',
             'petugas'            => '/petugas/dashboard',
             'masyarakat'         => '/masyarakat/dashboard',
             default              => '/',

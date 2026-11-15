@@ -18,3 +18,10 @@
           {{ request()->routeIs('bendahara.complaints.*') ? 'text-white bg-white/15' : 'text-white/70 hover:text-white hover:bg-white/10' }}">
     Pengaduan
 </a>
+@if (auth()->user()?->hasPermission('access.manage'))
+<a href="{{ route('bendahara.access.index') }}"
+   class="block px-4 py-2.5 text-sm font-medium rounded-lg transition
+          {{ request()->routeIs('bendahara.access.*') ? 'text-white bg-white/15' : 'text-white/70 hover:text-white hover:bg-white/10' }}">
+    Hak Akses
+</a>
+@endif
