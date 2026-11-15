@@ -17,10 +17,6 @@ use App\Http\Controllers\Bendahara\DashboardController as BendaharaDashboardCont
 use App\Http\Controllers\Bendahara\RekapController as BendaharaRekapController;
 use App\Http\Controllers\Bendahara\UserController as BendaharaUserController;
 use App\Http\Controllers\Bendahara\ComplaintController as BendaharaComplaintController;
-use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
-use App\Http\Controllers\Admin\RekapController as AdminRekapController;
-use App\Http\Controllers\Admin\UserController as AdminUserController;
-use App\Http\Controllers\Admin\ComplaintController as AdminComplaintController;
 
 /*
 |--------------------------------------------------------------------------
@@ -110,16 +106,3 @@ Route::middleware(['auth'])->prefix('bendahara')->name('bendahara.')->group(func
     Route::get('/pengaduan', [BendaharaComplaintController::class, 'index'])->name('complaints.index');
 });
 
-// Admin Routes (alias kompatibel agar route admin.* & URL /admin tetap jalan lancar)
-Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () {
-    Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
-    Route::get('/rekap', [AdminRekapController::class, 'index'])->name('rekap.index');
-    Route::post('/rekap/lock', [AdminRekapController::class, 'lock'])->name('rekap.lock');
-    Route::get('/pembayaran', [AdminRekapController::class, 'pembayaran'])->name('pembayaran');
-    Route::post('/pembayaran', [AdminRekapController::class, 'storePembayaran'])->name('pembayaran.store');
-    Route::get('/notifikasi', [AdminRekapController::class, 'notifications'])->name('notifications.index');
-    Route::get('/pengguna', [AdminUserController::class, 'index'])->name('pengguna.index');
-    Route::get('/pengguna/{user}/edit', [AdminUserController::class, 'edit'])->name('pengguna.edit');
-    Route::put('/pengguna/{user}', [AdminUserController::class, 'update'])->name('pengguna.update');
-    Route::get('/pengaduan', [AdminComplaintController::class, 'index'])->name('complaints.index');
-});

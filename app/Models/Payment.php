@@ -81,7 +81,7 @@ class Payment extends Model
     }
 
     /**
-     * Relasi: Pembayaran diverifikasi oleh satu user (admin/petugas).
+     * Relasi: Pembayaran diverifikasi oleh satu user (bendahara/petugas).
      */
     public function verifier(): BelongsTo
     {

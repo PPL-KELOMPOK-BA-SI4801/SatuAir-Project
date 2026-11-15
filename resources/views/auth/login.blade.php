@@ -60,7 +60,7 @@
 
                     <button type="button"
                             @click="activeTab = 'bendahara'; document.getElementById('role_field').value = 'bendahara'"
-                            :class="(activeTab === 'bendahara' || activeTab === 'admin') ? 'bg-white text-slate-900 shadow-sm font-bold' : 'text-slate-500 hover:text-slate-800 font-medium'"
+                            :class="activeTab === 'bendahara' ? 'bg-white text-slate-900 shadow-sm font-bold' : 'text-slate-500 hover:text-slate-800 font-medium'"
                             class="py-2.5 px-3 rounded-lg text-xs sm:text-sm transition-all duration-200 text-center flex items-center justify-center gap-1.5 cursor-pointer">
                         <span>Bendahara</span>
                     </button>

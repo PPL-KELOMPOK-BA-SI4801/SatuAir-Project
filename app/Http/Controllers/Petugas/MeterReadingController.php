@@ -28,7 +28,7 @@ class MeterReadingController extends Controller
     public function index(Request $request)
     {
         $user = Auth::user();
-        if (!in_array($user->role, ['petugas', 'admin'])) {
+        if ($user->role !== 'petugas') {
             abort(403, 'Akses ditolak.');
         }
 
@@ -65,7 +65,7 @@ class MeterReadingController extends Controller
     public function create($waterMeterId)
     {
         $user = Auth::user();
-        if (!in_array($user->role, ['petugas', 'admin'])) {
+        if ($user->role !== 'petugas') {
             abort(403, 'Akses ditolak.');
         }
 
@@ -87,7 +87,7 @@ class MeterReadingController extends Controller
     public function store(Request $request)
     {
         $user = Auth::user();
-        if (!in_array($user->role, ['petugas', 'admin'])) {
+        if ($user->role !== 'petugas') {
             abort(403, 'Akses ditolak.');
         }
 

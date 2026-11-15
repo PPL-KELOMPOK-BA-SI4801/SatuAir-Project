@@ -11,7 +11,7 @@ class ComplaintController extends Controller
 {
     public function index(Request $request)
     {
-        if (!in_array(Auth::user()?->role, ['bendahara', 'admin'])) {
+        if (Auth::user()?->role !== 'bendahara') {
             abort(403, 'Akses ditolak.');
         }
 

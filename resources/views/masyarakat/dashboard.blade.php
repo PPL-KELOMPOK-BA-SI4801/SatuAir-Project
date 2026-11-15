@@ -106,7 +106,7 @@
                                         <p class="text-sm font-bold text-[#12345A]">Rp {{ number_format($bill->total_amount, 0, ',', '.') }}</p>
                                     </div>
                                     @if($bill->payment?->paid_at)
-                                        <span class="text-xs font-semibold text-blue-700">Menunggu Konfirmasi Admin</span>
+                                        <span class="text-xs font-semibold text-blue-700">Menunggu Konfirmasi Bendahara</span>
                                     @elseif($bill->payment?->status === 'pending')
                                         <a href="{{ route('masyarakat.payments.instruction', $bill->payment->id) }}" class="inline-flex items-center gap-1.5 px-3.5 py-2 bg-amber-100 text-amber-800 text-xs font-semibold rounded-lg">Lanjutkan Pembayaran</a>
                                     @else

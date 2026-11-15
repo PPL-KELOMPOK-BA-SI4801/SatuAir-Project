@@ -73,7 +73,7 @@
                 {{-- Center: Desktop Navigation --}}
                 <div class="hidden md:flex items-center gap-2 ml-32">
                     @auth
-                        @if(in_array(auth()->user()->role, ['bendahara', 'admin']))
+                        @if(auth()->user()->role === 'bendahara')
                             @include('components.nav-bendahara')
                         @elseif(auth()->user()->role === 'petugas')
                             @include('components.nav-petugas')
@@ -86,7 +86,7 @@
                 {{-- Right: Notification + User Dropdown --}}
                 <div class="hidden md:flex items-center gap-3 ml-auto">
                     {{-- Notification Bell --}}
-                    @if(in_array(auth()->user()?->role, ['bendahara', 'admin']))
+                    @if(auth()->user()?->role === 'bendahara')
                     <a href="{{ route('bendahara.notifications.index') }}" aria-label="Notifikasi pembayaran" class="relative text-white/80 hover:text-white transition p-2 rounded-lg hover:bg-white/10">
                         @php($unreadNotifications = auth()->user()->unreadNotifications()->count())
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -125,11 +125,11 @@
                             <div class="px-4 py-3 border-b border-gray-100">
                                 <p class="text-sm font-semibold text-[#263445]">{{ Auth::user()->name ?? 'Pengguna' }}</p>
                                 <span class="inline-flex items-center mt-1 px-2 py-0.5 rounded-full text-xs font-medium
-                                    @if(in_array(Auth::user()->role ?? '', ['bendahara', 'admin'])) bg-purple-100 text-purple-700
+                                    @if((Auth::user()->role ?? '') === 'bendahara') bg-purple-100 text-purple-700
                                     @elseif((Auth::user()->role ?? '') === 'petugas') bg-blue-100 text-blue-700
                                     @else bg-green-100 text-green-700
                                     @endif">
-                                    {{ in_array(Auth::user()->role ?? '', ['bendahara', 'admin']) ? 'Bendahara BUMDes' : ucfirst(Auth::user()->role ?? 'masyarakat') }}
+                                    {{ (Auth::user()->role ?? '') === 'bendahara' ? 'Bendahara BUMDes' : ucfirst(Auth::user()->role ?? 'masyarakat') }}
                                 </span>
                             </div>
                             <a href="{{ route('profil.index') }}" class="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition">
@@ -175,7 +175,7 @@
              class="md:hidden border-t border-white/10">
             <div class="px-4 py-3 space-y-1">
                 @auth
-                    @if(in_array(auth()->user()->role, ['bendahara', 'admin']))
+                    @if(auth()->user()->role === 'bendahara')
                         @include('components.nav-bendahara-mobile')
                     @elseif(auth()->user()->role === 'petugas')
                         @include('components.nav-petugas-mobile')
@@ -191,7 +191,7 @@
                     </div>
                     <div>
                         <p class="text-white font-medium text-sm">{{ Auth::user()->name ?? 'Pengguna' }}</p>
-                        <span class="text-white/60 text-xs">{{ in_array(Auth::user()->role ?? '', ['bendahara', 'admin']) ? 'Bendahara BUMDes' : ucfirst(Auth::user()->role ?? 'masyarakat') }}</span>
+                        <span class="text-white/60 text-xs">{{ (Auth::user()->role ?? '') === 'bendahara' ? 'Bendahara BUMDes' : ucfirst(Auth::user()->role ?? 'masyarakat') }}</span>
                     </div>
                 </div>
                 <form method="POST" action="{{ route('logout') }}">

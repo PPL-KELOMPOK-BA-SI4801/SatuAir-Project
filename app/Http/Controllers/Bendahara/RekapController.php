@@ -99,7 +99,7 @@ class RekapController extends Controller
                 ->where('billing_period', $periode)->first();
             $reading = MeterReading::query()->where('water_meter_id', $meter->id)
                 ->whereYear('reading_date', $tahun)->whereMonth('reading_date', $bulan)
-                ->where(fn ($query) => $query->whereNull('notes')->orWhere('notes', 'not like', 'Diupdate oleh admin via Manajemen Pengguna%'))
+                ->where(fn ($query) => $query->whereNull('notes')->orWhere('notes', 'not like', 'Diupdate oleh bendahara via Manajemen Pengguna%'))
                 ->latest('reading_date')->first();
 
             if (!$bill && !$reading) {
@@ -217,6 +217,6 @@ class RekapController extends Controller
 
     private function authorizeBendahara(): void
     {
-        abort_unless(in_array(Auth::user()?->role, ['bendahara', 'admin']), 403, 'Akses ditolak.');
+        abort_unless(Auth::user()?->role === 'bendahara', 403, 'Akses ditolak.');
     }
 }
