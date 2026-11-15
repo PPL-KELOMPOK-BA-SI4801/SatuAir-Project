@@ -18,7 +18,7 @@ class DashboardController extends Controller
     public function index()
     {
         $user = Auth::user();
-        if (!in_array($user?->role, ['bendahara', 'admin'])) {
+        if ($user?->role !== 'bendahara') {
             abort(403, 'Akses ditolak.');
         }
 
@@ -29,8 +29,7 @@ class DashboardController extends Controller
         $totalUsers = User::count();
         $totalMasyarakat = User::where('role', 'masyarakat')->count();
         $totalPetugas = User::where('role', 'petugas')->count();
-        $totalBendahara = User::whereIn('role', ['bendahara', 'admin'])->count();
-        $totalAdmin = $totalBendahara;
+        $totalBendahara = User::where('role', 'bendahara')->count();
 
         // Statistik meter air
         $totalWaterMeters = WaterMeter::count();
@@ -86,7 +85,6 @@ class DashboardController extends Controller
             'totalUsers',
             'totalMasyarakat',
             'totalPetugas',
-            'totalAdmin',
             'totalBendahara',
             'totalWaterMeters',
             'activeWaterMeters',

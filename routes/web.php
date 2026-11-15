@@ -17,10 +17,6 @@ use App\Http\Controllers\Bendahara\DashboardController as BendaharaDashboardCont
 use App\Http\Controllers\Bendahara\RekapController as BendaharaRekapController;
 use App\Http\Controllers\Bendahara\UserController as BendaharaUserController;
 use App\Http\Controllers\Bendahara\ComplaintController as BendaharaComplaintController;
-use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
-use App\Http\Controllers\Admin\RekapController as AdminRekapController;
-use App\Http\Controllers\Admin\UserController as AdminUserController;
-use App\Http\Controllers\Admin\ComplaintController as AdminComplaintController;
 
 /*
 |--------------------------------------------------------------------------
@@ -51,7 +47,7 @@ Route::middleware('auth')->get('/profil', function () {
 })->name('profil.index');
 
 // Masyarakat Routes
-Route::middleware(['auth'])->prefix('masyarakat')->name('masyarakat.')->group(function () {
+Route::middleware(['auth', 'role:masyarakat', 'permission:resident.use'])->prefix('masyarakat')->name('masyarakat.')->group(function () {
     Route::get('/dashboard', [MasyarakatDashboardController::class, 'index'])->name('dashboard');
 
     // Tagihan Air
@@ -78,7 +74,7 @@ Route::middleware(['auth'])->prefix('masyarakat')->name('masyarakat.')->group(fu
 });
 
 // Petugas Routes
-Route::middleware(['auth'])->prefix('petugas')->name('petugas.')->group(function () {
+Route::middleware(['auth', 'role:petugas', 'permission:field.manage'])->prefix('petugas')->name('petugas.')->group(function () {
     Route::get('/dashboard', [PetugasDashboardController::class, 'index'])->name('dashboard');
 
     Route::get('/meters', [PetugasMeterReadingController::class, 'index'])->name('meters.index');
@@ -88,8 +84,6 @@ Route::middleware(['auth'])->prefix('petugas')->name('petugas.')->group(function
     Route::get('/payments', [PetugasPaymentController::class, 'index'])->name('payments.index');
     Route::post('/payments/kantor', [PetugasPaymentController::class, 'storeOffice'])->name('payments.office');
     Route::get('/payments/{id}', [PetugasPaymentController::class, 'show'])->name('payments.show');
-    Route::post('/payments/{id}/verify', [PetugasPaymentController::class, 'verify'])->name('payments.verify');
-    Route::post('/payments/{id}/reject', [PetugasPaymentController::class, 'reject'])->name('payments.reject');
 
     Route::get('/complaints', [PetugasComplaintController::class, 'index'])->name('complaints.index');
     Route::get('/complaints/{id}', [PetugasComplaintController::class, 'show'])->name('complaints.show');
@@ -97,29 +91,16 @@ Route::middleware(['auth'])->prefix('petugas')->name('petugas.')->group(function
 });
 
 // Bendahara Routes
-Route::middleware(['auth'])->prefix('bendahara')->name('bendahara.')->group(function () {
-    Route::get('/dashboard', [BendaharaDashboardController::class, 'index'])->name('dashboard');
+Route::middleware(['auth', 'role:bendahara', 'permission:finance.manage'])->prefix('bendahara')->name('bendahara.')->group(function () {
+    Route::get('/dashboard', [BendaharaDashboardController::class, 'index'])->name('dashboard')->middleware('permission:dashboard.bendahara');
     Route::get('/rekap', [BendaharaRekapController::class, 'index'])->name('rekap.index');
     Route::post('/rekap/lock', [BendaharaRekapController::class, 'lock'])->name('rekap.lock');
     Route::get('/pembayaran', [BendaharaRekapController::class, 'pembayaran'])->name('pembayaran');
     Route::post('/pembayaran', [BendaharaRekapController::class, 'storePembayaran'])->name('pembayaran.store');
     Route::get('/notifikasi', [BendaharaRekapController::class, 'notifications'])->name('notifications.index');
-    Route::get('/pengguna', [BendaharaUserController::class, 'index'])->name('pengguna.index');
-    Route::get('/pengguna/{user}/edit', [BendaharaUserController::class, 'edit'])->name('pengguna.edit');
-    Route::put('/pengguna/{user}', [BendaharaUserController::class, 'update'])->name('pengguna.update');
+    Route::get('/pengguna', [BendaharaUserController::class, 'index'])->name('pengguna.index')->middleware('permission:users.manage');
+    Route::get('/pengguna/{user}/edit', [BendaharaUserController::class, 'edit'])->name('pengguna.edit')->middleware('permission:users.manage');
+    Route::put('/pengguna/{user}', [BendaharaUserController::class, 'update'])->name('pengguna.update')->middleware('permission:users.manage');
     Route::get('/pengaduan', [BendaharaComplaintController::class, 'index'])->name('complaints.index');
 });
 
-// Admin Routes (alias kompatibel agar route admin.* & URL /admin tetap jalan lancar)
-Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () {
-    Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
-    Route::get('/rekap', [AdminRekapController::class, 'index'])->name('rekap.index');
-    Route::post('/rekap/lock', [AdminRekapController::class, 'lock'])->name('rekap.lock');
-    Route::get('/pembayaran', [AdminRekapController::class, 'pembayaran'])->name('pembayaran');
-    Route::post('/pembayaran', [AdminRekapController::class, 'storePembayaran'])->name('pembayaran.store');
-    Route::get('/notifikasi', [AdminRekapController::class, 'notifications'])->name('notifications.index');
-    Route::get('/pengguna', [AdminUserController::class, 'index'])->name('pengguna.index');
-    Route::get('/pengguna/{user}/edit', [AdminUserController::class, 'edit'])->name('pengguna.edit');
-    Route::put('/pengguna/{user}', [AdminUserController::class, 'update'])->name('pengguna.update');
-    Route::get('/pengaduan', [AdminComplaintController::class, 'index'])->name('complaints.index');
-});

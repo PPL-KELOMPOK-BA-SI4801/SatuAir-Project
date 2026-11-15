@@ -115,7 +115,7 @@
                         <span class="font-bold text-[#12345A]">Informasi Pembayaran Terakhir</span>
                         <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold
                             {{ $bill->payment->status === 'verified' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800' }}">
-                            {{ $bill->payment->status === 'verified' ? 'Pembayaran Dikonfirmasi' : ($bill->payment->paid_at ? 'Menunggu Konfirmasi Admin' : 'Menunggu Pembayaran') }}
+                            {{ $bill->payment->status === 'verified' ? 'Pembayaran Dikonfirmasi' : ($bill->payment->paid_at ? 'Menunggu Konfirmasi Bendahara' : 'Menunggu Pembayaran') }}
                         </span>
                     </div>
                     <div class="grid grid-cols-2 gap-2 text-gray-600">
@@ -146,7 +146,7 @@
                         💳 Bayar Sekarang Secara Online
                     </a>
                 @elseif($paymentAwaitingConfirmation)
-                    <span class="w-full sm:flex-1 py-3 px-4 bg-blue-50 text-blue-800 text-center font-bold text-sm rounded-xl">Menunggu Konfirmasi Admin</span>
+                    <span class="w-full sm:flex-1 py-3 px-4 bg-blue-50 text-blue-800 text-center font-bold text-sm rounded-xl">Menunggu Konfirmasi Bendahara</span>
                 @elseif($paymentAwaitingSubmission)
                     <a href="{{ route('masyarakat.payments.instruction', $bill->payment->id) }}" class="w-full sm:flex-1 py-3 px-4 bg-amber-50 text-amber-800 text-center font-bold text-sm rounded-xl">Lanjutkan Pembayaran</a>
                 @endif

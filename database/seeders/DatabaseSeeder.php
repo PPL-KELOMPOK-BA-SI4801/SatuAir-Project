@@ -18,6 +18,7 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
+        $this->call(AccessControlSeeder::class);
         // 1. Buat Wilayah / Dusun Desa Cibodas
         $areas = [
             ['name' => 'Dusun I - Cibodas Krajan', 'description' => 'Wilayah pusat desa dan balai desa', 'is_active' => true],

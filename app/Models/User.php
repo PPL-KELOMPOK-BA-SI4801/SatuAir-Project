@@ -7,6 +7,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class User extends Authenticatable
 {
@@ -87,6 +88,16 @@ class User extends Authenticatable
         return $this->hasMany(Complaint::class);
     }
 
+    public function roleModel(): BelongsTo
+    {
+        return $this->belongsTo(Role::class, 'role', 'name');
+    }
+
+    public function hasPermission(string $permission): bool
+    {
+        return $this->roleModel()->whereHas('permissions', fn (Builder $query) => $query->where('name', $permission))->exists();
+    }
+
     // ==================== Helper Methods ====================
 
     /**
@@ -95,14 +106,6 @@ class User extends Authenticatable
     public function isBendahara(): bool
     {
         return $this->role === 'bendahara';
-    }
-
-    /**
-     * Cek apakah user adalah Admin / Bendahara (kompatibel).
-     */
-    public function isAdmin(): bool
-    {
-        return in_array($this->role, ['bendahara', 'admin']);
     }
 
     /**

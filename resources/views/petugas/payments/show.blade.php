@@ -118,10 +118,7 @@
             </div>
 
             @if($payment->status === 'pending' && $payment->paid_at)
-                <div class="flex flex-wrap gap-3">
-                    <form method="POST" action="{{ route('petugas.payments.verify', $payment->id) }}">@csrf<button class="px-5 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl">Verifikasi Pembayaran</button></form>
-                    <form method="POST" action="{{ route('petugas.payments.reject', $payment->id) }}" class="flex gap-2">@csrf<input name="notes" class="rounded-xl border-gray-200 text-sm" placeholder="Alasan penolakan"><button class="px-5 py-3 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl">Tolak</button></form>
-                </div>
+                <div class="p-4 rounded-xl bg-amber-50 border border-amber-200 text-sm font-semibold text-amber-800">Pembayaran warga menunggu verifikasi bendahara.</div>
             @elseif($payment->status === 'pending')
                 <div class="p-4 rounded-xl bg-amber-50 border border-amber-200 text-sm font-semibold text-amber-800">Warga belum menyelesaikan pembayaran.</div>
             @elseif($payment->status === 'verified')

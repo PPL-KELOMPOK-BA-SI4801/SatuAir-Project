@@ -38,11 +38,11 @@
                     @auth
                         @php
                             $dashUrl = match(auth()->user()->role) {
-                                'bendahara', 'admin' => route('bendahara.dashboard'),
+                                'bendahara' => route('bendahara.dashboard'),
                                 'petugas' => route('petugas.dashboard'),
                                 default => route('masyarakat.dashboard'),
                             };
-                            $roleLabel = in_array(auth()->user()->role, ['bendahara', 'admin']) ? 'Bendahara' : ucfirst(auth()->user()->role);
+                            $roleLabel = auth()->user()->role === 'bendahara' ? 'Bendahara' : ucfirst(auth()->user()->role);
                         @endphp
                         <a href="{{ $dashUrl }}"
                            class="inline-flex items-center gap-2.5 px-7 py-3.5 rounded-full bg-white text-slate-950 font-bold text-sm sm:text-base hover:bg-slate-100 hover:shadow-xl hover:shadow-white/20 active:scale-95 transition-all duration-200">
@@ -517,7 +517,7 @@
                 </div>
             </div>
 
-            {{-- Role 3: Admin BUMDes --}}
+            {{-- Role 3: Bendahara BUMDes --}}
             <div class="rounded-3xl bg-white/5 border border-white/10 p-8 flex flex-col justify-between hover:border-sky-500/50 hover:bg-white/[0.07] transition-all duration-300 group">
                 <div>
                     <div class="w-12 h-12 rounded-2xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center font-bold text-lg mb-6 group-hover:scale-110 transition-transform">
@@ -529,7 +529,7 @@
                     </p>
                 </div>
                 <div class="pt-6 border-t border-white/10 flex items-center justify-between text-xs text-sky-400 font-semibold">
-                    <span>Akses: admin@gmail.com</span>
+                    <span>Akses: bendahara@gmail.com</span>
                     <span>Pengurus &rarr;</span>
                 </div>
             </div>

@@ -78,7 +78,7 @@ class WaterBill extends Model
     }
 
     /**
-     * Relasi: Tagihan dibuat oleh satu user (admin/petugas).
+     * Relasi: Tagihan dibuat oleh satu user (bendahara/petugas).
      */
     public function creator(): BelongsTo
     {

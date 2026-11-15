@@ -24,7 +24,7 @@ class ComplaintController extends Controller
     public function index(Request $request)
     {
         $user = Auth::user();
-        if (!in_array($user->role, ['petugas', 'admin'])) {
+        if ($user->role !== 'petugas') {
             abort(403, 'Akses ditolak.');
         }
 
@@ -91,7 +91,7 @@ class ComplaintController extends Controller
     public function show($id)
     {
         $user = Auth::user();
-        if (!in_array($user->role, ['petugas', 'admin'])) {
+        if ($user->role !== 'petugas') {
             abort(403, 'Akses ditolak.');
         }
 
@@ -114,7 +114,7 @@ class ComplaintController extends Controller
     public function update(Request $request, $id)
     {
         $user = Auth::user();
-        if (!in_array($user->role, ['petugas', 'admin'])) {
+        if ($user->role !== 'petugas') {
             abort(403, 'Akses ditolak.');
         }
 

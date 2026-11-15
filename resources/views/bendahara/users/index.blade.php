@@ -27,7 +27,7 @@
                 <label class="block text-xs font-semibold text-gray-600 mb-1">Peran</label>
                 <select name="role" class="w-full rounded-xl border-gray-200 focus:border-[#1976D2] focus:ring-1 focus:ring-[#1976D2] py-2 px-3 text-sm">
                     <option value="">Semua Peran</option>
-                    <option value="bendahara" {{ in_array(request('role'), ['bendahara', 'admin']) ? 'selected' : '' }}>Bendahara</option>
+                    <option value="bendahara" {{ request('role') === 'bendahara' ? 'selected' : '' }}>Bendahara</option>
                     <option value="petugas" {{ request('role') === 'petugas' ? 'selected' : '' }}>Petugas</option>
                     <option value="masyarakat" {{ request('role') === 'masyarakat' ? 'selected' : '' }}>Masyarakat</option>
                 </select>
@@ -69,10 +69,10 @@
                                 <td class="px-4 py-3 font-mono text-gray-600">{{ $user->customer_id ?? '-' }}</td>
                                 <td class="px-4 py-3">
                                     <span class="px-2 py-0.5 rounded uppercase font-semibold text-[10px]
-                                        @if(in_array($user->role, ['bendahara', 'admin'])) bg-purple-100 text-purple-800
+                                        @if($user->role === 'bendahara') bg-purple-100 text-purple-800
                                         @elseif($user->role === 'petugas') bg-blue-100 text-blue-800
                                         @else bg-green-100 text-green-800 @endif">
-                                        {{ in_array($user->role, ['bendahara', 'admin']) ? 'Bendahara' : ucfirst($user->role) }}
+                                        {{ $user->role === 'bendahara' ? 'Bendahara' : ucfirst($user->role) }}
                                     </span>
                                 </td>
                                 <td class="px-4 py-3 text-gray-600">{{ $user->created_at ? $user->created_at->format('d M Y') : '-' }}</td>
