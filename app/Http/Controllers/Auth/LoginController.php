@@ -19,6 +19,12 @@ class LoginController extends Controller
             'email' => ['required', 'email'],
             'password' => ['required', 'string'],
             'role' => ['required', 'in:masyarakat,petugas,bendahara,admin'],
+        ], [
+            'email.required' => 'Email wajib diisi.',
+            'email.email' => 'Format email tidak valid.',
+            'password.required' => 'Kata sandi wajib diisi.',
+            'role.required' => 'Peran wajib dipilih.',
+            'role.in' => 'Peran tidak valid.',
         ]);
 
         if (! Auth::attempt($request->only('email', 'password'), $request->boolean('remember'))) {
@@ -31,10 +37,18 @@ class LoginController extends Controller
         $roleMatches = $user->role === $selectedRole
             || (in_array($user->role, ['bendahara', 'admin']) && in_array($selectedRole, ['bendahara', 'admin']));
 
-        if (! $roleMatches) {
+        if (! $roleMatches || $user->status !== 'active') {
             Auth::logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            $errorKey = $roleMatches ? 'email' : 'role';
+            $errorMessage = $roleMatches
+                ? 'Akun Anda tidak aktif. Silakan hubungi administrator.'
+                : 'Anda tidak memiliki akses untuk peran ini.';
+
             return back()->withInput($request->only('email', 'role'))
-                ->withErrors(['role' => 'Anda tidak memiliki akses untuk peran ini.']);
+                ->withErrors([$errorKey => $errorMessage]);
         }
 
         $request->session()->regenerate();
@@ -54,6 +68,6 @@ class LoginController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect()->route('login');
+        return redirect()->route('login')->with('success', 'Anda berhasil keluar dari sistem.');
     }
 }
