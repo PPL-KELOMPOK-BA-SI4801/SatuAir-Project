@@ -51,7 +51,7 @@ class PaymentController extends Controller
             ->first();
         if ($existingPayment && $existingPayment->paid_at) {
             return redirect()->route('masyarakat.bills.show', $billId)
-                ->with('success', 'Pembayaran Anda sedang menunggu konfirmasi admin.');
+                ->with('success', 'Pembayaran Anda sedang menunggu konfirmasi bendahara.');
         }
         if ($existingPayment) {
             return redirect()->route('masyarakat.payments.instruction', $existingPayment->id);
@@ -88,7 +88,7 @@ class PaymentController extends Controller
             ->where('status', 'pending')->latest()->first();
         if ($existingPayment) {
             return $existingPayment->paid_at
-                ? redirect()->route('masyarakat.bills.show', $bill->id)->with('success', 'Pembayaran Anda sedang menunggu konfirmasi admin.')
+                ? redirect()->route('masyarakat.bills.show', $bill->id)->with('success', 'Pembayaran Anda sedang menunggu konfirmasi bendahara.')
                 : redirect()->route('masyarakat.payments.instruction', $existingPayment->id);
         }
 
@@ -174,14 +174,14 @@ class PaymentController extends Controller
                 return;
             }
             $lockedPayment->update(['paid_at' => now()]);
-            User::query()->where('role', 'admin')->get()->each(function (User $admin) use ($lockedPayment) {
-                $admin->notify(new ResidentPaymentSubmitted($lockedPayment));
+            User::query()->where('role', 'bendahara')->get()->each(function (User $bendahara) use ($lockedPayment) {
+                $bendahara->notify(new ResidentPaymentSubmitted($lockedPayment));
             });
         });
 
         return redirect()
             ->route('masyarakat.bills.show', $payment->water_bill_id)
-            ->with('success', 'Pembayaran berhasil dikirim dan sedang menunggu konfirmasi admin.');
+            ->with('success', 'Pembayaran berhasil dikirim dan sedang menunggu konfirmasi bendahara.');
     }
 
     /**

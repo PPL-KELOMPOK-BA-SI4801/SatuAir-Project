@@ -6,68 +6,124 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
+/**
+ * Controller untuk autentikasi login pengguna.
+ *
+ * Menangani tampilan form login dengan tab pemilihan peran
+ * (Masyarakat, Petugas, Bendahara), proses login, dan logout.
+ */
 class LoginController extends Controller
 {
+    /**
+     * Tampilkan halaman login.
+     *
+     * @return \Illuminate\View\View
+     */
     public function showLoginForm()
     {
         return view('auth.login');
     }
 
+    /**
+     * Proses autentikasi login pengguna.
+     *
+     * Memvalidasi kredensial email dan password, lalu mengarahkan
+     * pengguna ke dashboard sesuai peran mereka.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\RedirectResponse
+     */
     public function login(Request $request)
     {
-        $data = $request->validate([
-            'email' => ['required', 'email'],
+        $request->validate([
+            'email'    => ['required', 'email'],
             'password' => ['required', 'string'],
-            'role' => ['required', 'in:masyarakat,petugas,bendahara,admin'],
+            'role'     => ['required', 'in:masyarakat,petugas,bendahara'],
         ], [
-            'email.required' => 'Email wajib diisi.',
-            'email.email' => 'Format email tidak valid.',
-            'password.required' => 'Kata sandi wajib diisi.',
-            'role.required' => 'Peran wajib dipilih.',
-            'role.in' => 'Peran tidak valid.',
+            'email.required'    => 'Email wajib diisi.',
+            'email.email'       => 'Format email tidak valid.',
+            'password.required' => 'Password wajib diisi.',
+            'role.required'     => 'Peran wajib dipilih.',
+            'role.in'           => 'Peran tidak valid.',
         ]);
 
-        if (! Auth::attempt($request->only('email', 'password'), $request->boolean('remember'))) {
-            return back()->withInput($request->only('email', 'role'))
-                ->withErrors(['email' => 'Email atau password yang Anda masukkan salah.']);
+        $credentials = $request->only('email', 'password');
+
+        if (Auth::attempt($credentials, $request->boolean('remember'))) {
+            $request->session()->regenerate();
+
+            $user = Auth::user();
+
+            // Pastikan peran yang dipilih sesuai dengan peran pengguna.
+            $userRole = $user->role;
+            $reqRole = $request->role;
+            $roleMatches = $userRole === $reqRole;
+
+            if (!$roleMatches) {
+                Auth::logout();
+                $request->session()->invalidate();
+                $request->session()->regenerateToken();
+
+                return back()
+                    ->withInput($request->only('email', 'role'))
+                    ->withErrors([
+                        'role' => 'Anda tidak memiliki akses untuk peran ini.',
+                    ]);
+            }
+
+            // Verifikasi status akun aktif
+            if ($user->status !== 'active') {
+                Auth::logout();
+                $request->session()->invalidate();
+                $request->session()->regenerateToken();
+
+                return back()
+                    ->withInput($request->only('email', 'role'))
+                    ->withErrors([
+                        'email' => 'Akun Anda tidak aktif. Silakan hubungi pengelola.',
+                    ]);
+            }
+
+            // Arahkan ke dashboard sesuai peran
+            return redirect()->intended($this->redirectPath($user->role));
         }
 
-        $user = Auth::user();
-        $selectedRole = $data['role'];
-        $roleMatches = $user->role === $selectedRole
-            || (in_array($user->role, ['bendahara', 'admin']) && in_array($selectedRole, ['bendahara', 'admin']));
-
-        if (! $roleMatches || $user->status !== 'active') {
-            Auth::logout();
-            $request->session()->invalidate();
-            $request->session()->regenerateToken();
-
-            $errorKey = $roleMatches ? 'email' : 'role';
-            $errorMessage = $roleMatches
-                ? 'Akun Anda tidak aktif. Silakan hubungi administrator.'
-                : 'Anda tidak memiliki akses untuk peran ini.';
-
-            return back()->withInput($request->only('email', 'role'))
-                ->withErrors([$errorKey => $errorMessage]);
-        }
-
-        $request->session()->regenerate();
-        $path = match ($user->role) {
-            'bendahara', 'admin' => '/bendahara/dashboard',
-            'petugas' => '/petugas/dashboard',
-            'masyarakat' => '/masyarakat/dashboard',
-            default => '/',
-        };
-
-        return redirect()->intended($path);
+        return back()
+            ->withInput($request->only('email', 'role'))
+            ->withErrors([
+                'email' => 'Email atau password yang Anda masukkan salah.',
+            ]);
     }
 
+    /**
+     * Proses logout pengguna.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\RedirectResponse
+     */
     public function logout(Request $request)
     {
         Auth::logout();
+
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
         return redirect()->route('login')->with('success', 'Anda berhasil keluar dari sistem.');
+    }
+
+    /**
+     * Tentukan path redirect berdasarkan peran pengguna.
+     *
+     * @param  string  $role
+     * @return string
+     */
+    protected function redirectPath(string $role): string
+    {
+        return match ($role) {
+            'bendahara' => '/bendahara/dashboard',
+            'petugas'            => '/petugas/dashboard',
+            'masyarakat'         => '/masyarakat/dashboard',
+            default              => '/',
+        };
     }
 }

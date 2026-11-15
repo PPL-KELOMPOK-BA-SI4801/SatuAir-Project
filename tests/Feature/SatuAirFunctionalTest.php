@@ -10,10 +10,18 @@ use App\Models\Payment;
 use App\Models\Complaint;
 use App\Models\ComplaintCategory;
 use App\Models\Area;
+use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 class SatuAirFunctionalTest extends TestCase
 {
+    use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->seed(DatabaseSeeder::class);
+    }
     /**
      * Test 1: Halaman Landing Page Publik dapat diakses.
      */
@@ -66,7 +74,7 @@ class SatuAirFunctionalTest extends TestCase
         $this->post('/logout');
 
         // Test login Bendahara
-        $bendahara = User::whereIn('role', ['bendahara', 'admin'])->first();
+        $bendahara = User::where('role', 'bendahara')->first();
         if ($bendahara) {
             $respBendahara = $this->post('/login', [
                 'email' => $bendahara->email,
@@ -150,9 +158,9 @@ class SatuAirFunctionalTest extends TestCase
     /**
      * Test 7: Dashboard Bendahara & Mini Reporting (Klasemen Musim / Pendapatan Antar-Tahun).
      */
-    public function test_admin_dashboard_and_reporting_can_be_accessed(): void
+    public function test_bendahara_dashboard_and_reporting_can_be_accessed(): void
     {
-        $bendahara = User::whereIn('role', ['bendahara', 'admin'])->first();
+        $bendahara = User::where('role', 'bendahara')->first();
 
         $response = $this->actingAs($bendahara)->get('/bendahara/dashboard');
         $response->assertStatus(200);

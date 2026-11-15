@@ -27,7 +27,7 @@ class AppServiceProvider extends ServiceProvider
                 return '/';
             }
             return match ($user->role) {
-                'admin' => route('admin.dashboard'),
+                'bendahara' => route('bendahara.dashboard'),
                 'petugas' => route('petugas.dashboard'),
                 default => route('masyarakat.dashboard'),
             };

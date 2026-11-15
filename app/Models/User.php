@@ -98,14 +98,6 @@ class User extends Authenticatable
     }
 
     /**
-     * Cek apakah user adalah Admin / Bendahara (kompatibel).
-     */
-    public function isAdmin(): bool
-    {
-        return in_array($this->role, ['bendahara', 'admin']);
-    }
-
-    /**
      * Cek apakah user adalah Petugas.
      */
     public function isPetugas(): bool
