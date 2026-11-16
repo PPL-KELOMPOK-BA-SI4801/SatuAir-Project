@@ -19,3 +19,7 @@
     Pengaduan
 </a>
 
+<a href="{{ route('masyarakat.meter-history.index') }}"
+   class="px-3 py-2 text-sm font-medium text-blue-100 hover:text-white transition">
+    Riwayat Meter
+</a>
