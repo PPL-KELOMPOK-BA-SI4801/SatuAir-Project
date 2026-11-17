@@ -49,7 +49,7 @@ class MeterHistoryController extends Controller
         $years = MeterReading::whereHas('waterMeter', function ($q) use ($user) {
                 $q->where('user_id', $user->id);
             })
-            ->selectRaw("strftime('%Y', reading_date) as year")
+            ->selectRaw("YEAR(reading_date) as year")
             ->distinct()
             ->orderByDesc('year')
             ->pluck('year');
