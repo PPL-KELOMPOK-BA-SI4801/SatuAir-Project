@@ -86,7 +86,17 @@
                                 </td>
                                 <td class="px-4 py-3 text-gray-600">{{ $user->created_at ? $user->created_at->format('d M Y') : '-' }}</td>
                                 <td class="px-4 py-3 text-right">
-                                    @if($user->role === 'masyarakat' || $user->role === 'petugas')
+                                    @if($user->role === 'masyarakat')
+                                        <a href="{{ route('bendahara.pengguna.show', $user->id) }}" class="px-3 py-1 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold border border-slate-200 rounded-lg transition">
+                                            Detail
+                                        </a>
+                                        <a href="{{ route('bendahara.pengguna.profile.edit', $user->id) }}" class="px-3 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-semibold border border-blue-200 rounded-lg transition">
+                                            Edit
+                                        </a>
+                                        <a href="{{ route('bendahara.pengguna.edit', $user->id) }}" class="px-2 py-1 text-slate-500 hover:text-slate-700 text-[10px] font-medium transition">
+                                            Meter/Tarif
+                                        </a>
+                                    @elseif($user->role === 'petugas')
                                         <a href="{{ route('bendahara.pengguna.edit', $user->id) }}" class="px-3 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-semibold border border-blue-200 rounded-lg transition">
                                             Edit
                                         </a>

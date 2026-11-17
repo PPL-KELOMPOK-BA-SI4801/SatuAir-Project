@@ -50,8 +50,18 @@ Route::middleware('auth')->get('/profil', function () {
     if ($user->role === 'masyarakat') {
         return redirect()->route('masyarakat.profile.show');
     }
+    if ($user->role === 'bendahara') {
+        return redirect()->route('bendahara.profile.edit');
+    }
     return redirect()->back();
 })->name('profil.index');
+
+Route::middleware(['auth', 'role:bendahara'])
+    ->prefix('bendahara')->name('bendahara.')
+    ->group(function () {
+        Route::get('/profil', [BendaharaUserController::class, 'editOwnProfile'])->name('profile.edit');
+        Route::put('/profil', [BendaharaUserController::class, 'updateOwnProfile'])->name('profile.update');
+    });
 
 // Masyarakat Routes
 Route::middleware(['auth', 'role:masyarakat', 'permission:resident.use'])->prefix('masyarakat')->name('masyarakat.')->group(function () {
@@ -123,6 +133,9 @@ Route::middleware(['auth', 'role:bendahara', 'permission:finance.manage'])->pref
     Route::post('/pembayaran', [BendaharaRekapController::class, 'storePembayaran'])->name('pembayaran.store');
     Route::get('/notifikasi', [BendaharaRekapController::class, 'notifications'])->name('notifications.index');
     Route::get('/pengguna', [BendaharaUserController::class, 'index'])->name('pengguna.index')->middleware('permission:users.manage');
+    Route::get('/pengguna/{user}', [BendaharaUserController::class, 'showCustomer'])->name('pengguna.show')->middleware('permission:users.manage');
+    Route::get('/pengguna/{user}/profil/edit', [BendaharaUserController::class, 'editCustomerProfile'])->name('pengguna.profile.edit')->middleware('permission:users.manage');
+    Route::put('/pengguna/{user}/profil', [BendaharaUserController::class, 'updateCustomerProfile'])->name('pengguna.profile.update')->middleware('permission:users.manage');
     Route::get('/pengguna/{user}/edit', [BendaharaUserController::class, 'edit'])->name('pengguna.edit')->middleware('permission:users.manage');
     Route::put('/pengguna/{user}', [BendaharaUserController::class, 'update'])->name('pengguna.update')->middleware('permission:users.manage');
     Route::get('/pengaduan', [BendaharaComplaintController::class, 'index'])->name('complaints.index');
