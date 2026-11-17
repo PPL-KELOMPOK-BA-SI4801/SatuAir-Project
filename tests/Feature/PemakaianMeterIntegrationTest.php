@@ -37,6 +37,7 @@ class PemakaianMeterIntegrationTest extends TestCase
         BillingPeriod::query()->update(['status' => 'closed']);
         BillingPeriod::create(['year' => 2026, 'month' => 10, 'billing_period' => '2026-10', 'status' => 'active']);
         MeterReading::create([
+            'requires_review' => false,
             'water_meter_id' => $this->meter->id,
             'reading_value' => '317.00', 'previous_value' => '300.00',
             'reading_date' => '2026-09-10', 'recorded_by' => $this->petugas->id,
@@ -66,7 +67,7 @@ class PemakaianMeterIntegrationTest extends TestCase
     }
 
     #[DataProvider('hasilValid')]
-    public function test_perhitungan_server_dipakai_untuk_pencatatan_dan_tagihan(string $akhir, string $pemakaian): void
+    public function test_perhitungan_server_dipakai_untuk_pencatatan_yang_menunggu_pemeriksaan(string $akhir, string $pemakaian): void
     {
         $this->kirim($akhir, ['previous_value' => '1', 'usage_m3' => '9999', 'recorded_by' => $this->pelanggan->id])
             ->assertSessionHasNoErrors()->assertRedirect(route('petugas.meters.index'));
@@ -74,9 +75,11 @@ class PemakaianMeterIntegrationTest extends TestCase
         $this->assertSame('317.00', $reading->previous_value);
         $this->assertSame(str_replace(',', '.', $akhir), $reading->reading_value);
         $this->assertSame($this->petugas->id, $reading->recorded_by);
-        $this->assertDatabaseHas('water_bills', [
-            'water_meter_id' => $this->meter->id, 'billing_period' => '2026-10', 'usage_m3' => $pemakaian,
-        ]);
+        $this->assertTrue($reading->requires_review);
+        $this->assertNull($reading->verified_at);
+        $service = app(\App\Services\PemeriksaanPemakaian::class);
+        $this->assertSame($pemakaian, $service->snapshot($reading)['usage_m3']);
+        $this->assertDatabaseCount('water_bills', 0);
     }
 
     public static function inputTidakValid(): array
@@ -97,7 +100,8 @@ class PemakaianMeterIntegrationTest extends TestCase
         $this->meter->readings()->delete();
         $this->kirim('12,00')->assertSessionHasNoErrors();
         $this->assertDatabaseHas('meter_readings', ['previous_value' => '0.00', 'reading_value' => '12.00']);
-        $this->assertDatabaseHas('water_bills', ['usage_m3' => '12.00']);
+        $this->assertDatabaseCount('water_bills', 0);
+        $this->assertSame('12.00', app(\App\Services\PemeriksaanPemakaian::class)->snapshot($this->meter->readings()->sole())['usage_m3']);
     }
 
     public function test_pencatatan_ganda_ditolak_dan_form_dinonaktifkan(): void
@@ -105,7 +109,7 @@ class PemakaianMeterIntegrationTest extends TestCase
         $this->kirim('342')->assertSessionHasNoErrors();
         $this->kirim('350')->assertSessionHasErrors('reading_value');
         $this->assertDatabaseCount('meter_readings', 2);
-        $this->assertDatabaseCount('water_bills', 1);
+        $this->assertDatabaseCount('water_bills', 0);
         $this->get(route('petugas.meters.create', $this->meter->id))->assertOk()
             ->assertSee('sudah dicatat')->assertSee('disabled', false);
     }
@@ -137,11 +141,10 @@ class PemakaianMeterIntegrationTest extends TestCase
         }
     }
 
-    public function test_kegagalan_tagihan_membatalkan_pencatatan_dan_membersihkan_foto(): void
+    public function test_kegagalan_penyimpanan_membatalkan_pencatatan_dan_membersihkan_foto(): void
     {
         Storage::fake('public');
-        $this->mock(BillingService::class)->shouldReceive('createBillFromReading')->once()
-            ->andThrow(new RuntimeException('Simulasi kegagalan tagihan.'));
+        MeterReading::creating(fn () => throw new RuntimeException('Simulasi kegagalan simpan.'));
         $this->withoutExceptionHandling();
         try {
             $photo = UploadedFile::fake()->createWithContent('meter.png', base64_decode(
@@ -150,7 +153,9 @@ class PemakaianMeterIntegrationTest extends TestCase
             $this->kirim('342', ['photo' => $photo]);
             $this->fail('Operasi yang gagal harus melempar exception.');
         } catch (RuntimeException $exception) {
-            $this->assertSame('Simulasi kegagalan tagihan.', $exception->getMessage());
+            $this->assertSame('Simulasi kegagalan simpan.', $exception->getMessage());
+        } finally {
+            MeterReading::flushEventListeners();
         }
         $this->assertDatabaseCount('meter_readings', 1);
         $this->assertDatabaseCount('water_bills', 0);

@@ -73,7 +73,7 @@ class KoreksiPencatatanMeter
 
             $before = $this->snapshot($reading);
             $reading->update(['reading_value' => $this->hitung::satuanKeDesimal($akhir)]);
-            $this->billing->createBillFromReading($reading, $actor);
+            if (! $reading->requires_review) $this->billing->createBillFromReading($reading, $actor);
             $this->record($reading, 'corrected', $reason, $actor, $before);
 
             return $reading;

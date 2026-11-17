@@ -49,6 +49,9 @@ class MeterReadingCorrectionTest extends TestCase
             'notes' => 'Catatan asli PBI-08.',
         ])->assertSessionHasNoErrors();
         $this->reading = $this->meter->readings()->whereDate('reading_date', '2026-11-10')->sole();
+        // Pertahankan coverage koreksi tagihan lama; pencatatan baru PBI-10 diuji terpisah.
+        $this->reading->update(['requires_review' => false]);
+        app(BillingService::class)->createBillFromReading($this->reading, $this->petugas->id);
         $this->bill = WaterBill::query()->sole();
     }
 
@@ -167,8 +170,7 @@ class MeterReadingCorrectionTest extends TestCase
         ])->assertSessionHasNoErrors();
         $this->assertSame(2, MeterReading::query()->count());
         $this->assertSame(3, MeterReading::withTrashed()->count());
-        $this->assertSame(1, WaterBill::query()->count());
-        $this->assertSame('25.00', WaterBill::query()->sole()->usage_m3);
+        $this->assertSame(0, WaterBill::query()->count());
         $replacement = $this->meter->readings()->whereDate('reading_date', '2026-11-11')->sole();
         $this->get(route('petugas.readings.show', $replacement->id))->assertOk()
             ->assertSee(route('petugas.readings.show', $this->reading->id));
@@ -193,7 +195,7 @@ class MeterReadingCorrectionTest extends TestCase
                 'water_meter_id' => $this->meter->id, 'reading_value' => '350', 'previous_value' => '342',
                 'reading_date' => $condition === 'duplicate' ? '2026-11-11' : '2026-12-10',
             ]),
-            'next_bill' => $this->bill->replicate()->fill(['billing_period' => '2026-12'])->save(),
+            'next_bill' => $this->bill->replicate(['meter_reading_id'])->fill(['billing_period' => '2026-12'])->save(),
             'paid' => $this->bill->update(['status' => 'paid']),
             default => Payment::create([
                 'water_bill_id' => $this->bill->id, 'user_id' => $this->resident->id,

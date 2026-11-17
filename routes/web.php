@@ -19,6 +19,7 @@ use App\Http\Controllers\Bendahara\RekapController as BendaharaRekapController;
 use App\Http\Controllers\Bendahara\UserController as BendaharaUserController;
 use App\Http\Controllers\Bendahara\ComplaintController as BendaharaComplaintController;
 use App\Http\Controllers\Bendahara\AccessControlController;
+use App\Http\Controllers\Bendahara\MeterReadingReviewController;
 
 /*
 |--------------------------------------------------------------------------
@@ -102,6 +103,15 @@ Route::middleware(['auth', 'role:petugas', 'permission:field.manage'])->prefix('
 
 // Bendahara Routes
 Route::middleware(['auth', 'role:bendahara', 'permission:finance.manage'])->prefix('bendahara')->name('bendahara.')->group(function () {
+    Route::get('/pemeriksaan', [MeterReadingReviewController::class, 'index'])->name('reviews.index');
+    Route::get('/pemeriksaan/pencatatan/{reading}', [MeterReadingReviewController::class, 'reading'])->whereNumber('reading')->name('reviews.reading');
+    Route::get('/pemeriksaan/pencatatan/{reading}/buat', [MeterReadingReviewController::class, 'create'])->whereNumber('reading')->name('reviews.create');
+    Route::post('/pemeriksaan/pencatatan/{reading}', [MeterReadingReviewController::class, 'store'])->whereNumber('reading')->name('reviews.store');
+    Route::get('/pemeriksaan/{review}', [MeterReadingReviewController::class, 'show'])->whereNumber('review')->name('reviews.show');
+    Route::get('/pemeriksaan/{review}/edit', [MeterReadingReviewController::class, 'edit'])->whereNumber('review')->name('reviews.edit');
+    Route::patch('/pemeriksaan/{review}', [MeterReadingReviewController::class, 'update'])->whereNumber('review')->name('reviews.update');
+    Route::delete('/pemeriksaan/{review}', [MeterReadingReviewController::class, 'destroy'])->whereNumber('review')->name('reviews.destroy');
+    Route::post('/pemeriksaan/{review}/finalisasi', [MeterReadingReviewController::class, 'finalize'])->whereNumber('review')->name('reviews.finalize');
     Route::get('/dashboard', [BendaharaDashboardController::class, 'index'])->name('dashboard')->middleware('permission:dashboard.bendahara');
     Route::get('/rekap', [BendaharaRekapController::class, 'index'])->name('rekap.index');
     Route::post('/rekap/lock', [BendaharaRekapController::class, 'lock'])->name('rekap.lock');

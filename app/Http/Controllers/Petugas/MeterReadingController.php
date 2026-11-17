@@ -7,7 +7,6 @@ use App\Models\Area;
 use App\Models\BillingPeriod;
 use App\Models\MeterReading;
 use App\Models\WaterMeter;
-use App\Services\BillingService;
 use App\Services\HitungPemakaianMeter;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -140,7 +139,7 @@ class MeterReadingController extends Controller
                 $photoPath = $request->file('photo')->store('meter-photos', 'public');
             }
 
-            $bill = DB::transaction(function () use ($validated, $readingPeriod, $akhir, $hitung, $user, $photoPath) {
+            DB::transaction(function () use ($validated, $readingPeriod, $akhir, $hitung, $user, $photoPath) {
                 $meter = WaterMeter::query()->lockForUpdate()->findOrFail($validated['water_meter_id']);
                 if ($meter->status !== 'active') {
                     throw ValidationException::withMessages(['water_meter_id' => 'Meter air tidak aktif.']);
@@ -157,6 +156,9 @@ class MeterReadingController extends Controller
                     ->where('reading_date', '<', $nextPeriod)->exists()) {
                     throw ValidationException::withMessages(['reading_value' => 'Pelanggan ini sudah dicatat pada periode yang sama.']);
                 }
+                if (\App\Models\WaterBill::where('water_meter_id', $meter->id)->where('billing_period', $readingPeriod)->exists()) {
+                    throw ValidationException::withMessages(['reading_date' => 'Tagihan periode ini sudah tersedia. Pencatatan baru tidak diperbolehkan.']);
+                }
                 if ($meter->readings()->where('reading_date', '>=', $nextPeriod)->exists()
                     || \App\Models\WaterBill::query()->where('water_meter_id', $meter->id)->where('billing_period', '>', $readingPeriod)->exists()) {
                     throw ValidationException::withMessages(['reading_date' => 'Sudah ada pencatatan atau tagihan lanjutan. Pencatatan mundur tidak diizinkan.']);
@@ -166,7 +168,7 @@ class MeterReadingController extends Controller
                 $awal = $hitung->angkaKeSatuan($previousReading?->reading_value ?? '0', 'reading_value');
                 $hitung->hitung($awal, $akhir, 'reading_value');
 
-                $reading = MeterReading::create([
+                MeterReading::create([
                     'water_meter_id' => $meter->id,
                     'reading_value' => $hitung::satuanKeDesimal($akhir),
                     'previous_value' => $hitung::satuanKeDesimal($awal),
@@ -176,7 +178,6 @@ class MeterReadingController extends Controller
                     'notes' => $validated['notes'] ?? null,
                 ]);
 
-                return app(BillingService::class)->createBillFromReading($reading, $user->id);
             }, 3);
         } catch (Throwable $exception) {
             if ($photoPath !== null) {
@@ -185,10 +186,7 @@ class MeterReadingController extends Controller
             throw $exception;
         }
 
-        $message = 'Pembacaan meter ' . $meter->meter_number . ' berhasil disimpan.';
-        if ($bill) {
-            $message .= ' Tagihan periode ' . $bill->billing_period . ' sebesar Rp ' . number_format((float) $bill->total_amount, 0, ',', '.') . ' telah dibuat.';
-        }
+        $message = 'Pembacaan meter ' . $meter->meter_number . ' berhasil disimpan. Menunggu pemeriksaan Bendahara sebelum tagihan dibuat.';
 
         return redirect()
             ->route('petugas.meters.index')

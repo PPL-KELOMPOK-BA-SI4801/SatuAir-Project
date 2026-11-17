@@ -74,6 +74,10 @@
             </div>
         @else
             <div class="text-sm text-slate-500 space-y-2">
+                <p class="font-semibold text-[#1976D2]">Status pemeriksaan: {{ $reading->reviewLabel() }}</p>
+                @if ($reading->latestReview?->status === 'returned')
+                    <p class="rounded-xl bg-amber-50 p-4 text-amber-900">Catatan Bendahara: {{ $reading->latestReview->notes }}</p>
+                @endif
                 <p>Tanggal pencatatan: {{ $reading->reading_date->format('d/m/Y') }} · Dicatat oleh {{ $reading->recorder->name ?? 'Pengguna tidak tersedia' }}</p>
                 @if ($reading->notes)<p>Catatan: {{ $reading->notes }}</p>@endif
                 @if ($reading->photo)<a href="{{ \Illuminate\Support\Facades\Storage::disk('public')->url($reading->photo) }}" class="inline-block underline text-[#1976D2]">Lihat foto meter</a>@endif

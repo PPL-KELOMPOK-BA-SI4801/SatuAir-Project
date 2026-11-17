@@ -27,7 +27,7 @@ class MeterReadingCorrectionController extends Controller
         $correction->ubah($reading, $input['revision'], $input['reading_value'], $input['reason'], $request->user()->id);
 
         return redirect()->route('petugas.readings.show', $reading)
-            ->with('success', 'Perubahan tersimpan. Pemakaian dan tagihan telah dihitung ulang.');
+            ->with('success', 'Perubahan tersimpan. Pemakaian dihitung ulang; pencatatan baru memerlukan pemeriksaan Bendahara sebelum tagihan dibuat.');
     }
 
     public function cancel(Request $request, int $reading, KoreksiPencatatanMeter $correction)

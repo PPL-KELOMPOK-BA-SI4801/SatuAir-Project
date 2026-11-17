@@ -55,6 +55,7 @@ class Pbi09DemoSeeder extends Seeder
                     'meter_number' => $meterNumber, 'status' => 'active',
                 ]);
                 MeterReading::create([
+                    'requires_review' => false,
                     'water_meter_id' => $meter->id, 'previous_value' => '0.00',
                     'reading_value' => $reading, 'reading_date' => $month->copy()->subMonth()->toDateString(),
                     'recorded_by' => $petugas->id,
