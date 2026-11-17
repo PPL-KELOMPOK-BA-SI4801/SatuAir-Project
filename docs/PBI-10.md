@@ -155,3 +155,17 @@ FROM water_bills ORDER BY id DESC;
 Tes PHPUnit memakai SQLite dalam memori. Tes browser memakai Playwright yang tersedia di lingkungan pengembangan, bukan Laravel Dusk. Dusk tetap pekerjaan lanjutan sesuai urutan yang disepakati. Lengkapi hasil Dusk, prompt/bukti AI, serta lampiran tampilan pada Jira sebelum menandai selesai atau In Review. Teks file ini menjadi acuan pembaruan Jira; issue Jira belum diedit otomatis.
 
 PBI-09 telah digabungkan ke main melalui PR #13 pada commit `802f4df`. Progres PBI-10 disimpan pada branch tersendiri dengan key Jira `PBI-2`; pengujian Laravel Dusk masih merupakan pekerjaan lanjutan sebelum dinyatakan selesai atau In Review.
+
+## Sinkronisasi setelah PBI-09 masuk main
+
+Main `802f4df` diselaraskan ke branch PBI-10 tanpa konflik teks. Controller, route, halaman dan navigasi riwayat PBI-11 dari PR #12 dipertahankan. Sebanyak 49 file cache/compiled views yang kembali terlacak pada main tidak disertakan dalam hasil integrasi branch ini; isi runtime lokal yang sebelumnya ada dicadangkan dan dipulihkan, serta placeholder `.gitignore` tetap tersedia.
+
+Verifikasi setelah sinkronisasi:
+
+- `php vendor/bin/phpunit --do-not-cache-result`: **111 tes, 861 assertion lulus**.
+- `composer validate --no-check-publish --no-check-all`: valid.
+- `node tests/browser-pbi10.cjs` pada database MySQL uji baru `satuair_pbi10_sync_test_20261118_0230`: lulus seluruh alur PBI-10.
+- Login Warga Budi dan pembukaan `/masyarakat/meter-history?month=11&year=2026` pada database uji: HTTP 200, satu pencatatan bulan November menampilkan meter akhir 352.00 dan pemakaian 35,00 m³ hasil persetujuan PBI-10.
+- `.env` dan file SQLite lama tidak berubah. Tidak menjalankan migration atau seeder ulang pada database kerja untuk sinkronisasi ini.
+
+Commit dan push progres menggunakan key Jira `PBI-2`. Pull request dan penggabungan PBI-10 ke main merupakan tahap terpisah; penghapusan README yang sudah ada secara lokal tidak disertakan dalam commit.

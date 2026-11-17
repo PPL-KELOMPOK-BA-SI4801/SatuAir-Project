@@ -9,6 +9,7 @@ use App\Http\Controllers\Masyarakat\BillController as MasyarakatBillController;
 use App\Http\Controllers\Masyarakat\PaymentController as MasyarakatPaymentController;
 use App\Http\Controllers\Masyarakat\ComplaintController as MasyarakatComplaintController;
 use App\Http\Controllers\Masyarakat\ProfileController as MasyarakatProfileController;
+use App\Http\Controllers\Masyarakat\MeterHistoryController as MasyarakatMeterHistoryController;
 use App\Http\Controllers\Petugas\DashboardController as PetugasDashboardController;
 use App\Http\Controllers\Petugas\MeterReadingController as PetugasMeterReadingController;
 use App\Http\Controllers\Petugas\MeterReadingCorrectionController;
@@ -55,6 +56,9 @@ Route::middleware('auth')->get('/profil', function () {
 // Masyarakat Routes
 Route::middleware(['auth', 'role:masyarakat', 'permission:resident.use'])->prefix('masyarakat')->name('masyarakat.')->group(function () {
     Route::get('/dashboard', [MasyarakatDashboardController::class, 'index'])->name('dashboard');
+
+    // Riwayat pencatatan meter
+    Route::get('/meter-history', [MasyarakatMeterHistoryController::class, 'index'])->name('meter-history.index');
 
     // Tagihan Air
     Route::get('/bills', [MasyarakatBillController::class, 'index'])->name('bills.index');
