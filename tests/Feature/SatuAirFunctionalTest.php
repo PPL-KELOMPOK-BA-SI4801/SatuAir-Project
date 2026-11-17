@@ -10,8 +10,8 @@ use App\Models\Payment;
 use App\Models\Complaint;
 use App\Models\ComplaintCategory;
 use App\Models\Area;
-use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Database\Seeders\DatabaseSeeder;
 
 class SatuAirFunctionalTest extends TestCase
 {
@@ -22,6 +22,7 @@ class SatuAirFunctionalTest extends TestCase
         parent::setUp();
         $this->seed(DatabaseSeeder::class);
     }
+
     /**
      * Test 1: Halaman Landing Page Publik dapat diakses.
      */
