@@ -12,6 +12,7 @@ use App\Services\BillingService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 use Illuminate\Support\Str;
 
 class UserController extends Controller
@@ -40,6 +41,74 @@ class UserController extends Controller
         $users = $query->paginate(20)->withQueryString();
 
         return view('bendahara.users.index', compact('users'));
+    }
+
+    public function showCustomer(User $user)
+    {
+        $this->authorizeCustomerProfile($user);
+
+        return view('lihat-edit-pelanggan', [
+            'customer' => $user,
+            'editable' => false,
+            'ownProfile' => false,
+        ]);
+    }
+
+    public function editCustomerProfile(User $user)
+    {
+        $this->authorizeCustomerProfile($user);
+
+        return view('lihat-edit-pelanggan', [
+            'customer' => $user,
+            'editable' => true,
+            'ownProfile' => false,
+        ]);
+    }
+
+    public function updateCustomerProfile(Request $request, User $user)
+    {
+        $this->authorizeCustomerProfile($user);
+        $user->update($this->validatedProfile($request, $user));
+
+        return redirect()->route('bendahara.pengguna.show', $user)
+            ->with('success', 'Data pelanggan berhasil diperbarui.');
+    }
+
+    public function editOwnProfile()
+    {
+        abort_unless(Auth::user()?->role === 'bendahara', 403, 'Akses ditolak.');
+
+        return view('lihat-edit-pelanggan', [
+            'customer' => Auth::user(),
+            'editable' => true,
+            'ownProfile' => true,
+        ]);
+    }
+
+    public function updateOwnProfile(Request $request)
+    {
+        $user = Auth::user();
+        abort_unless($user?->role === 'bendahara', 403, 'Akses ditolak.');
+        $user->update($this->validatedProfile($request, $user));
+
+        return redirect()->route('bendahara.profile.edit')
+            ->with('success', 'Profil berhasil diperbarui.');
+    }
+
+    private function authorizeCustomerProfile(User $user): void
+    {
+        abort_unless(Auth::user()?->role === 'bendahara', 403, 'Akses ditolak.');
+        abort_unless($user->role === 'masyarakat', 404);
+    }
+
+    private function validatedProfile(Request $request, User $user): array
+    {
+        return $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user->id)],
+            'phone' => ['nullable', 'string', 'max:30'],
+            'address' => ['nullable', 'string', 'max:1000'],
+        ]);
     }
 
     /**

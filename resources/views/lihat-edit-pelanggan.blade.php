@@ -44,26 +44,27 @@
     <header class="topbar">
         <a class="brand" href="{{ route('home') }}"><span class="brand-mark">◆</span>SatuAir</a>
         <nav aria-label="Navigasi utama">
-            <a href="{{ route('home') }}">Dashboard</a>
-            <a href="{{ route('pelanggan.index') }}" class="active">Pengguna</a>
+            <a href="{{ route('bendahara.dashboard') }}">Dashboard</a>
+            @unless($ownProfile ?? false)<a href="{{ route('bendahara.pengguna.index') }}" class="active">Pengguna</a>@endunless
         </nav>
-        <div class="account">{{ auth()->user()->name }}</div>
+        <a class="account" href="{{ route('bendahara.profile.edit') }}">{{ auth()->user()->name }}</a>
     </header>
 
     <main>
-        <a class="back" href="{{ route('pelanggan.index') }}">← Kembali ke Manajemen Pengguna</a>
+        @unless($ownProfile ?? false)<a class="back" href="{{ route('bendahara.pengguna.index') }}">Kembali ke Manajemen Pengguna</a>@endunless
         <section class="card" aria-labelledby="page-title">
             @if(session('success')) <p class="flash" role="status">{{ session('success') }}</p> @endif
             @if($errors->any())
                 <div class="errors" role="alert"><strong>Periksa kembali data berikut:</strong><ul>@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul></div>
             @endif
             <div class="card-head">
-                <h1 id="page-title">{{ $editable ? 'Edit Data Pelanggan' : 'Detail Pelanggan' }}</h1>
-                <span class="badge">Masyarakat</span>
+                <h1 id="page-title">{{ ($ownProfile ?? false) ? 'Profil Saya' : ($editable ? 'Edit Data Pelanggan' : 'Detail Pelanggan') }}</h1>
+                <span class="badge">{{ ucfirst($customer->role) }}</span>
             </div>
-            <form action="{{ $editable ? route('pelanggan.update', $customer) : route('pelanggan.show', $customer) }}" method="post">
+            @if($editable)<form action="{{ ($ownProfile ?? false) ? route('bendahara.profile.update') : route('bendahara.pengguna.profile.update', $customer) }}" method="post">
                 @csrf
-                @if($editable) @method('PUT') @endif
+                @method('PUT')
+            @endif
                 <div class="grid">
                     <div class="field">
                         <label for="name">Nama lengkap</label>
@@ -79,7 +80,7 @@
                     </div>
                     <div class="field">
                         <label>ID pelanggan</label>
-                        <div class="readonly">{{ $customer->customer_id ?: 'CUST-' . str_pad((string) $customer->id, 5, '0', STR_PAD_LEFT) }}</div>
+                        <div class="readonly">{{ $customer->customer_id ?: (($customer->role === 'bendahara' ? 'ADM-' : 'CUST-') . str_pad((string) $customer->id, 5, '0', STR_PAD_LEFT)) }}</div>
                         <p class="hint">ID pelanggan tidak dapat diubah.</p>
                     </div>
                     <div class="field full">
@@ -89,14 +90,18 @@
                 </div>
                 <div class="actions">
                     @if($editable)
-                        <a class="button secondary" href="{{ route('pelanggan.show', $customer) }}">Batal</a>
+                        @if($ownProfile ?? false)
+                            <a class="button secondary" href="{{ route('bendahara.dashboard') }}">Batal</a>
+                        @else
+                            <a class="button secondary" href="{{ route('bendahara.pengguna.show', $customer) }}">Batal</a>
+                        @endif
                         <button class="button" type="submit">Simpan Perubahan</button>
                     @else
-                        <a class="button secondary" href="{{ route('pelanggan.index') }}">Kembali</a>
-                        <a class="button" href="{{ route('pelanggan.edit', $customer) }}">Edit Data Pelanggan</a>
+                        <a class="button secondary" href="{{ route('bendahara.pengguna.index') }}">Kembali</a>
+                        <a class="button" href="{{ route('bendahara.pengguna.profile.edit', $customer) }}">Edit Data Pelanggan</a>
                     @endif
                 </div>
-            </form>
+            @if($editable)</form>@endif
         </section>
     </main>
     <footer>SatuAir &copy; {{ date('Y') }} — BUMDes Karya Mandiri</footer>
