@@ -6,87 +6,99 @@
     <title>{{ $editable ? 'Edit' : 'Detail' }} Pelanggan · SatuAir</title>
     <style>
         * { box-sizing: border-box; }
-        body { margin: 0; min-height: 100vh; display: flex; flex-direction: column; background: #f3f6fa; color: #172b46; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
-        .topbar { height: 96px; background: #112b4b; color: #e8eef6; display: flex; align-items: center; padding: 0 32px; gap: 24px; }
-        .brand { display: flex; align-items: center; gap: 16px; color: white; font-size: 28px; font-weight: 700; text-decoration: none; white-space: nowrap; }
-        .brand-mark { display:grid; place-items:center; width:50px; height:50px; border-radius:50%; background:#1877f2; }
-        .brand-mark svg { width:25px; height:25px; fill:white; }
-        .nav { display:flex; align-items:center; justify-content:center; gap:12px; flex:1; }
-        .nav a { color:#d5deeb; text-decoration:none; font-size:18px; padding:14px 22px; border-radius:10px; }
-        .nav a.active { color:#fff; background:#203e62; font-weight:600; }
-        .account { display:flex; align-items:center; gap:13px; white-space:nowrap; font-size:17px; }
-        .bell { width:25px; height:25px; margin-right:22px; color:#cfdaea; }
-        .avatar { display:grid; place-items:center; width:44px; height:44px; border-radius:50%; background:#078cc4; color:white; font-weight:700; }
-        main { flex:1; width:min(736px, calc(100% - 32px)); margin:48px auto 72px; }
-        .back { display:inline-flex; align-items:center; gap:12px; margin:0 0 40px; color:#4b5c73; text-decoration:none; font-size:17px; }
-        .back svg { width:20px; height:20px; }
-        .card { background:white; border-radius:28px; padding:52px 50px 50px; box-shadow:0 8px 30px rgba(24,48,77,.06); }
-        .card-head { display:flex; justify-content:space-between; align-items:center; gap:16px; margin-bottom:26px; }
-        h1 { margin:0; font-size:28px; letter-spacing:-.7px; }
-        .badge { padding:8px 17px; border-radius:999px; color:#178448; background:#e6f7ef; font-weight:600; }
-        .customer { margin:0 0 5px; font-size:20px; font-weight:700; color:#2b374a; }
-        .email { margin:0 0 40px; color:#9babc0; font-size:17px; }
-        .field { margin-bottom:37px; }
-        label { display:block; margin-bottom:12px; color:#43536a; font-size:17px; }
-        input { width:100%; height:61px; border:1.5px solid #dce5f0; border-radius:11px; padding:0 22px; color:#46546a; font:inherit; font-size:19px; outline:none; }
-        input:focus { border-color:#2575d0; box-shadow:0 0 0 3px rgba(37,117,208,.12); }
-        input:disabled { background:#f8fafc; color:#5c697c; }
-        .unit-wrap { position:relative; }
-        .unit-wrap input { padding-right:60px; }
-        .unit { position:absolute; right:22px; top:50%; transform:translateY(-50%); color:#9babc0; pointer-events:none; }
-        .hint { margin:12px 0 0; color:#9babc0; font-size:16px; }
-        .divider { border:0; border-top:1px solid #edf1f5; margin:32px 0 42px; }
-        .actions { display:flex; gap:12px; }
-        .button { display:flex; justify-content:center; align-items:center; width:100%; min-height:65px; border:0; border-radius:11px; background:#122f52; color:white; text-decoration:none; font:inherit; font-size:18px; cursor:pointer; }
-        .button.secondary { background:#eef3f8; color:#263c58; }
-        footer { min-height:70px; border-top:1px solid #e9eef4; display:grid; place-items:center; color:#8292a7; font-size:15px; }
-        @media (max-width: 900px) { .topbar { height:auto; min-height:78px; padding:14px 20px; flex-wrap:wrap; } .brand { font-size:23px; } .brand-mark { width:42px; height:42px; } .nav { order:3; flex-basis:100%; overflow:auto; justify-content:flex-start; } .nav a { font-size:15px; padding:10px 14px; } .account { margin-left:auto; font-size:14px; } .bell { margin-right:4px; } }
-        @media (max-width: 560px) { main { margin:28px auto 48px; } .back { margin-bottom:24px; font-size:15px; } .card { border-radius:20px; padding:30px 22px; } h1 { font-size:23px; } .badge { font-size:13px; padding:7px 12px; } .customer { font-size:18px; } .email { font-size:15px; } label { font-size:15px; } input { height:54px; font-size:17px; } .actions { flex-direction:column; } .account .account-name { display:none; } }
+        body { margin:0; min-height:100vh; display:flex; flex-direction:column; background:#f5f7fa; color:#263445; font-family:Inter,Arial,sans-serif; }
+        .topbar { min-height:56px; background:#12345a; color:#e8eef6; display:flex; align-items:center; padding:0 20px; gap:34px; }
+        .brand { color:white; text-decoration:none; font-size:16px; font-weight:700; white-space:nowrap; }
+        .brand-mark { display:inline-grid; place-items:center; width:28px; height:28px; margin-right:8px; border-radius:50%; background:#1683e5; }
+        nav { display:flex; align-items:center; gap:8px; flex:1; }
+        nav a { color:#d5deeb; text-decoration:none; font-size:13px; padding:9px 12px; border-radius:8px; }
+        nav a.active { background:#203e62; color:#fff; font-weight:600; }
+        .account { font-size:12px; white-space:nowrap; }
+        main { flex:1; width:min(900px,calc(100% - 32px)); margin:32px auto 56px; }
+        .back { display:inline-block; margin:0 0 20px; color:#50627a; font-size:13px; text-decoration:none; }
+        .card { background:#fff; border:1px solid #e8edf3; border-radius:14px; padding:28px; box-shadow:0 3px 12px #12345a0a; }
+        .card-head { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:20px; }
+        h1 { margin:0; color:#12345a; font-size:22px; }
+        .badge { padding:5px 10px; border-radius:5px; background:#dcfce7; color:#15803d; font-size:11px; font-weight:700; text-transform:uppercase; }
+        .flash { margin:0 0 18px; padding:12px 14px; border:1px solid #bbf7d0; border-radius:8px; background:#f0fdf4; color:#166534; font-size:13px; }
+        .errors { margin:0 0 18px; padding:12px 14px; border:1px solid #fecaca; border-radius:8px; background:#fef2f2; color:#b91c1c; font-size:13px; }
+        .grid { display:grid; grid-template-columns:1fr 1fr; gap:18px 20px; }
+        .field { min-width:0; }
+        .field.full { grid-column:1/-1; }
+        label { display:block; margin-bottom:7px; color:#475569; font-size:12px; font-weight:600; }
+        input,textarea { display:block; width:100%; border:1px solid #d7e0ea; border-radius:8px; padding:10px 12px; color:#263445; font:inherit; font-size:13px; background:white; }
+        input:focus,textarea:focus { outline:2px solid #bfdbfe; border-color:#1976d2; }
+        input:disabled,textarea:disabled { background:#f8fafc; color:#64748b; }
+        textarea { min-height:94px; resize:vertical; }
+        .readonly { padding:10px 12px; border:1px solid #e2e8f0; border-radius:8px; background:#f8fafc; color:#64748b; font-size:13px; }
+        .hint { margin:6px 0 0; color:#64748b; font-size:11px; }
+        .actions { display:flex; justify-content:flex-end; gap:10px; margin-top:24px; padding-top:20px; border-top:1px solid #edf1f5; }
+        .button { display:inline-flex; justify-content:center; align-items:center; min-height:38px; border:1px solid transparent; border-radius:8px; padding:0 16px; background:#1976d2; color:white; text-decoration:none; font:inherit; font-size:13px; font-weight:600; cursor:pointer; }
+        .button:hover { background:#1565c0; }
+        .button.secondary { border-color:#d7e0ea; background:#fff; color:#40536b; }
+        footer { min-height:58px; border-top:1px solid #e9eef4; display:grid; place-items:center; background:white; color:#8292a7; font-size:12px; }
+        @media(max-width:620px) { .topbar { flex-wrap:wrap; padding:12px 16px; gap:8px; } nav { order:3; flex-basis:100%; overflow:auto; } .account { margin-left:auto; } .grid { grid-template-columns:1fr; } .field.full { grid-column:auto; } .card { padding:20px; } }
     </style>
 </head>
 <body>
     <header class="topbar">
-        <a class="brand" href="{{ route('home') }}" aria-label="SatuAir">
-            <span class="brand-mark"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5C9.1 6.7 4.5 11 4.5 15.3a7.5 7.5 0 0 0 15 0C19.5 11 14.9 6.7 12 2.5Z"/></svg></span>
-            <span>SatuAir</span>
-        </a>
-        <nav class="nav" aria-label="Navigasi utama">
-            <a href="#dashboard">Dashboard</a><a href="#rekap">Rekap</a><a class="active" href="{{ route('pelanggan.show', $id) }}">Pengguna</a><a href="#pengaduan">Pengaduan</a>
+        <a class="brand" href="{{ route('home') }}"><span class="brand-mark">◆</span>SatuAir</a>
+        <nav aria-label="Navigasi utama">
+            <a href="{{ route('home') }}">Dashboard</a>
+            <a href="{{ route('pelanggan.index') }}" class="active">Pengguna</a>
         </nav>
-        <div class="account">
-            <svg class="bell" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-label="Notifikasi"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            <span class="avatar">P</span><span class="account-name">Pak Hendra (Pengurus BUMDes)</span><span aria-hidden="true">⌄</span>
-        </div>
+        <div class="account">{{ auth()->user()->name }}</div>
     </header>
 
     <main>
-        <a class="back" href="{{ route('pelanggan.show', $id) }}">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m15 18-6-6 6-6M9 12h12" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            Kembali ke Manajemen Pengguna
-        </a>
+        <a class="back" href="{{ route('pelanggan.index') }}">← Kembali ke Manajemen Pengguna</a>
         <section class="card" aria-labelledby="page-title">
-            <div class="card-head"><h1 id="page-title">{{ $editable ? 'Edit Pengguna' : 'Detail Pengguna' }}</h1><span class="badge">Masyarakat</span></div>
-            <p class="customer">Budi Santoso</p>
-            <p class="email">Email: budi@gmail.com</p>
-            <form action="#" method="post">
-                <div class="field">
-                    <label for="meter">Pembacaan Meter Terbaru (m³)</label>
-                    <div class="unit-wrap"><input id="meter" name="meter" type="number" step="0.01" value="317.00" @disabled(!$editable)><span class="unit">m³</span></div>
-                    <p class="hint">Pembacaan sebelumnya: 317.00 m³</p>
+            @if(session('success')) <p class="flash" role="status">{{ session('success') }}</p> @endif
+            @if($errors->any())
+                <div class="errors" role="alert"><strong>Periksa kembali data berikut:</strong><ul>@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul></div>
+            @endif
+            <div class="card-head">
+                <h1 id="page-title">{{ $editable ? 'Edit Data Pelanggan' : 'Detail Pelanggan' }}</h1>
+                <span class="badge">Masyarakat</span>
+            </div>
+            <form action="{{ $editable ? route('pelanggan.update', $customer) : route('pelanggan.show', $customer) }}" method="post">
+                @csrf
+                @if($editable) @method('PUT') @endif
+                <div class="grid">
+                    <div class="field">
+                        <label for="name">Nama lengkap</label>
+                        <input id="name" name="name" value="{{ old('name', $customer->name) }}" @disabled(!$editable) required maxlength="255" autocomplete="name">
+                    </div>
+                    <div class="field">
+                        <label for="email">Email</label>
+                        <input id="email" name="email" type="email" value="{{ old('email', $customer->email) }}" @disabled(!$editable) required maxlength="255" autocomplete="email">
+                    </div>
+                    <div class="field">
+                        <label for="phone">Nomor telepon</label>
+                        <input id="phone" name="phone" type="tel" value="{{ old('phone', $customer->phone) }}" @disabled(!$editable) maxlength="30" autocomplete="tel">
+                    </div>
+                    <div class="field">
+                        <label>ID pelanggan</label>
+                        <div class="readonly">{{ $customer->customer_id ?: 'CUST-' . str_pad((string) $customer->id, 5, '0', STR_PAD_LEFT) }}</div>
+                        <p class="hint">ID pelanggan tidak dapat diubah.</p>
+                    </div>
+                    <div class="field full">
+                        <label for="address">Alamat</label>
+                        <textarea id="address" name="address" @disabled(!$editable) maxlength="1000" autocomplete="street-address">{{ old('address', $customer->address) }}</textarea>
+                    </div>
                 </div>
-                <div class="field">
-                    <label for="tarif">Tarif per m³ (Rp)</label>
-                    <input id="tarif" name="tarif" type="number" step="0.01" value="0.00" @disabled(!$editable)>
+                <div class="actions">
+                    @if($editable)
+                        <a class="button secondary" href="{{ route('pelanggan.show', $customer) }}">Batal</a>
+                        <button class="button" type="submit">Simpan Perubahan</button>
+                    @else
+                        <a class="button secondary" href="{{ route('pelanggan.index') }}">Kembali</a>
+                        <a class="button" href="{{ route('pelanggan.edit', $customer) }}">Edit Data Pelanggan</a>
+                    @endif
                 </div>
-                <hr class="divider">
-                @if ($editable)
-                    <div class="actions"><a class="button secondary" href="{{ route('pelanggan.show', $id) }}">Batal</a><button class="button" type="button">Simpan Perubahan</button></div>
-                @else
-                    <a class="button" href="{{ route('pelanggan.edit', $id) }}">Edit Data Pelanggan</a>
-                @endif
             </form>
         </section>
     </main>
-    <footer>SatuAir © 2026 — BUMDes Karya Mandiri</footer>
+    <footer>SatuAir &copy; {{ date('Y') }} — BUMDes Karya Mandiri</footer>
 </body>
 </html>
