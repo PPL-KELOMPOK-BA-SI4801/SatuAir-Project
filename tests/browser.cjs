@@ -49,7 +49,7 @@ const baseUrl = process.env.METER_TEST_BASE_URL || 'http://127.0.0.1:8001';
         await input.fill('316');
         await Promise.all([
             page.waitForNavigation(),
-            page.getByRole('button', {name: 'Simpan & Buat Tagihan', exact: true}).click(),
+            page.getByRole('button', {name: 'Simpan Pencatatan', exact: true}).click(),
         ]);
         assert.match(await page.locator('main').innerText(), /Pencatatan belum disimpan/);
         assert.equal(await page.locator('#meter-error').innerText(), 'Meter akhir tidak boleh lebih kecil dari meter awal.');
@@ -80,14 +80,14 @@ const baseUrl = process.env.METER_TEST_BASE_URL || 'http://127.0.0.1:8001';
 
         await Promise.all([
             page.waitForURL(baseUrl + '/petugas/meters'),
-            page.getByRole('button', {name: 'Simpan & Buat Tagihan', exact: true}).click(),
+            page.getByRole('button', {name: 'Simpan Pencatatan', exact: true}).click(),
         ]);
         assert.match(await page.locator('body').innerText(), /berhasil disimpan/);
         assert.match(await page.locator('tbody tr').filter({hasText: 'Budi Santoso'}).innerText(), /342\.00 m³/);
         await page.goto(formBudi);
         assert.match(await page.locator('main').innerText(), /sudah dicatat/);
         assert.equal(await input.isDisabled(), true);
-        assert.equal(await page.getByRole('button', {name: 'Simpan & Buat Tagihan', exact: true}).isDisabled(), true);
+        assert.equal(await page.getByRole('button', {name: 'Simpan Pencatatan', exact: true}).isDisabled(), true);
 
         const token = await page.locator('#meter-form input[name="_token"]').inputValue();
         const meterId = await page.locator('input[name="water_meter_id"]').inputValue();
@@ -148,7 +148,7 @@ const baseUrl = process.env.METER_TEST_BASE_URL || 'http://127.0.0.1:8001';
         assert.equal(await input.isEnabled(), true);
         assert.equal(await page.locator('#meter-awal').inputValue(), '317,00');
         await input.fill('342,00');
-        await Promise.all([page.waitForURL(baseUrl + '/petugas/meters'), page.getByRole('button', {name: 'Simpan & Buat Tagihan', exact: true}).click()]);
+        await Promise.all([page.waitForURL(baseUrl + '/petugas/meters'), page.getByRole('button', {name: 'Simpan Pencatatan', exact: true}).click()]);
         await page.getByRole('link', {name: 'Rincian Budi Santoso', exact: true}).click();
         assert.equal(await page.locator('#total-pemakaian').innerText(), '25,00 m³');
         assert.deepEqual(errors, []);

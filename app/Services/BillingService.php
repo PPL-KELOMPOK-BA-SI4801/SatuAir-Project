@@ -19,6 +19,11 @@ class BillingService
      */
     public function createBillFromReading(MeterReading $reading, int $createdBy): ?WaterBill
     {
+        if ($reading->trashed()) return null;
+        if ($reading->requires_review && (! $reading->verified_at || ! $reading->reviews()
+            ->where('status', 'approved')->where('reading_revision', $reading->reviewRevision())->exists())) {
+            return null;
+        }
         $meter = $reading->waterMeter;
         if (!$meter || !$meter->user_id) {
             return null;
@@ -46,6 +51,12 @@ class BillingService
             ->lockForUpdate()->first();
 
         if ($existing) {
+            if ($reading->requires_review) {
+                if ($existing->meter_reading_id !== $reading->id) {
+                    throw ValidationException::withMessages(['review' => 'Tagihan periode ini berasal dari pencatatan lain.']);
+                }
+                return $existing;
+            }
             if ($existing->status !== 'unpaid' || $existing->payment()->exists()) {
                 throw ValidationException::withMessages(['reading_value' => 'Tagihan sudah diproses atau memiliki pembayaran. Pencatatan tidak dapat diubah.']);
             }
@@ -64,6 +75,7 @@ class BillingService
         $adminFee = self::DEFAULT_ADMIN_FEE;
 
         return WaterBill::create([
+            'meter_reading_id' => $reading->id,
             'user_id' => $meter->user_id,
             'water_meter_id' => $meter->id,
             'billing_period' => $period,

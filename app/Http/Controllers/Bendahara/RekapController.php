@@ -119,7 +119,8 @@ class RekapController extends Controller
                 'previous' => $bill?->previous_reading ?? $reading?->previous_value,
                 'current' => $bill?->current_reading ?? $reading?->reading_value,
                 'usage' => $usage, 'rate' => $rate, 'adminFee' => $adminFee,
-                'amount' => $bill ? (float) $bill->total_amount : ($usage > 0 ? ($usage * $rate) + $adminFee : 0),
+                // Nilai rupiah baru menjadi tagihan setelah persetujuan PBI-10.
+                'amount' => $bill ? (float) $bill->total_amount : null,
             ];
         });
 

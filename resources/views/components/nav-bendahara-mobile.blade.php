@@ -3,6 +3,10 @@
           {{ request()->routeIs('bendahara.dashboard') ? 'text-white bg-white/15' : 'text-white/70 hover:text-white hover:bg-white/10' }}">
     Dashboard
 </a>
+@if (auth()->user()?->hasPermission('finance.manage'))
+<a href="{{ route('bendahara.reviews.index') }}"
+   class="block px-4 py-2.5 text-sm font-medium rounded-lg transition {{ request()->routeIs('bendahara.reviews.*') ? 'text-white bg-white/15' : 'text-white/70 hover:text-white hover:bg-white/10' }}">Pemeriksaan</a>
+@endif
 <a href="{{ route('bendahara.rekap.index') }}"
    class="block px-4 py-2.5 text-sm font-medium rounded-lg transition
           {{ request()->routeIs('bendahara.rekap.*') ? 'text-white bg-white/15' : 'text-white/70 hover:text-white hover:bg-white/10' }}">

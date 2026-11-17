@@ -112,7 +112,12 @@ class UserController extends Controller
                     ->whereYear('reading_date', $activePeriod->year)->whereMonth('reading_date', $activePeriod->month)
                     ->latest('reading_date')->first();
                 if ($reading) {
-                    $reading->update(['reading_value' => $currentReading, 'recorded_by' => $bendahara->id, 'notes' => 'Diupdate oleh bendahara via Manajemen Pengguna']);
+                    if (($reading->requires_review || $reading->verified_at) && (float) $reading->reading_value !== $currentReading) {
+                        return back()->withInput()->withErrors(['current_reading' => 'Angka pencatatan yang memerlukan pemeriksaan tidak dapat diubah melalui Manajemen Pengguna. Gunakan alur koreksi Petugas.']);
+                    }
+                    if (! $reading->requires_review && ! $reading->verified_at) {
+                        $reading->update(['reading_value' => $currentReading, 'recorded_by' => $bendahara->id, 'notes' => 'Diupdate oleh bendahara via Manajemen Pengguna']);
+                    }
                 } else {
                     $reading = MeterReading::create([
                         'water_meter_id' => $meter->id,

@@ -88,10 +88,11 @@
         <p class="text-sm text-slate-500">Angka meter akhir tidak boleh lebih kecil dari angka meter awal.</p>
         <div class="flex flex-wrap gap-4">
             <button type="submit" @disabled(! $bolehMencatat)
-                class="rounded-xl bg-[#1976D2] px-5 py-3 font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50">Simpan &amp; Buat Tagihan</button>
+                class="rounded-xl bg-[#1976D2] px-5 py-3 font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50">Simpan Pencatatan</button>
             <a href="{{ route('petugas.meters.index') }}" class="rounded-xl border border-slate-200 px-5 py-3 font-semibold text-[#1976D2]">Batal</a>
         </div>
     </form>
+    <p class="text-sm text-slate-500">Pencatatan menunggu pemeriksaan Bendahara. Tagihan dibuat setelah disetujui.</p>
 </div>
 @endsection
 

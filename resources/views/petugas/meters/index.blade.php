@@ -7,7 +7,7 @@
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
             <h1 class="text-2xl font-bold text-[#12345A]">Pencatatan Water Meter</h1>
-            <p class="text-sm text-gray-500 mt-1">Masukkan angka meter dan foto. Tagihan periode berjalan dibuat otomatis.</p>
+            <p class="text-sm text-gray-500 mt-1">Masukkan angka meter dan foto. Pencatatan diperiksa Bendahara sebelum tagihan dibuat.</p>
         </div>
     </div>
 
@@ -48,6 +48,7 @@
                                 @if($meter->latestReading)
                                     <p class="font-semibold">{{ $meter->latestReading->reading_value }} m³</p>
                                     <p class="text-xs text-gray-500">{{ $meter->latestReading->reading_date?->format('d M Y') }}</p>
+                                    <p class="mt-1 text-xs text-[#1976D2]">{{ $meter->latestReading->reviewLabel() }}</p>
                                 @else
                                     <span class="text-xs text-amber-600">Belum ada pencatatan</span>
                                 @endif
