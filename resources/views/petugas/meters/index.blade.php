@@ -53,6 +53,14 @@
                                 @endif
                             </td>
                             <td class="px-4 py-3 text-right">
+                                @if ($meter->latestRecordedReading)
+                                    <a href="{{ route('petugas.readings.show', $meter->latestRecordedReading->id) }}"
+                                       class="inline-flex px-3 py-1.5 border border-slate-200 text-[#1976D2] text-xs font-semibold rounded-lg mb-1"
+                                       aria-label="Rincian {{ $meter->user->name ?? $meter->meter_number }}">Rincian</a>
+                                    @if ($meter->latestRecordedReading->trashed())
+                                        <span class="block text-xs text-red-700 mb-2">Pencatatan terakhir dibatalkan</span>
+                                    @endif
+                                @endif
                                 <a href="{{ route('petugas.meters.create', $meter->id) }}"
                                    class="inline-flex px-3 py-1.5 bg-[#1976D2] text-white text-xs font-semibold rounded-lg">
                                     Catat

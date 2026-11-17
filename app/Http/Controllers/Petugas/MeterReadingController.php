@@ -8,9 +8,14 @@ use App\Models\BillingPeriod;
 use App\Models\MeterReading;
 use App\Models\WaterMeter;
 use App\Services\BillingService;
+use App\Services\HitungPemakaianMeter;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
+use Throwable;
 
 /**
  * Controller untuk pencatatan meter air oleh petugas.
@@ -34,7 +39,7 @@ class MeterReadingController extends Controller
 
         $areas = Area::where('is_active', true)->orderBy('name')->get();
 
-        $query = WaterMeter::with(['user', 'area', 'latestReading'])
+        $query = WaterMeter::with(['user', 'area', 'latestReading', 'latestRecordedReading'])
             ->where('status', 'active');
 
         if ($request->filled('search')) {
@@ -62,7 +67,7 @@ class MeterReadingController extends Controller
      * @param  int  $waterMeterId
      * @return \Illuminate\View\View
      */
-    public function create($waterMeterId)
+    public function create($waterMeterId, HitungPemakaianMeter $hitung)
     {
         $user = Auth::user();
         if ($user->role !== 'petugas') {
@@ -70,13 +75,24 @@ class MeterReadingController extends Controller
         }
 
         $meter = WaterMeter::with(['user', 'area', 'latestReading'])->findOrFail($waterMeterId);
-        $previousReading = $meter->latestReading;
         $period = BillingPeriod::query()->where('status', 'active')->first();
         $defaultReadingDate = $period
             ? Carbon::create((int) $period->year, (int) $period->month, 10)->min(now())->toDateString()
             : now()->toDateString();
+        $readingPeriod = Carbon::parse($defaultReadingDate)->format('Y-m');
+        $previousReading = $meter->readingBeforePeriod($readingPeriod);
+        $meterAwal = $hitung->angkaKeSatuan($previousReading?->reading_value ?? '0');
+        $tercatat = $meter->readings()->where('reading_date', '>=', $readingPeriod.'-01')
+            ->where('reading_date', '<', Carbon::parse($defaultReadingDate)->startOfMonth()->addMonth()->toDateString())
+            ->exists();
+        $bolehMencatat = $period?->billing_period === $readingPeriod && $meter->status === 'active' && ! $tercatat;
+        $currentReading = $meter->readings()->where('reading_date', '>=', $readingPeriod.'-01')
+            ->where('reading_date', '<', Carbon::parse($defaultReadingDate)->startOfMonth()->addMonth()->toDateString())
+            ->orderByDesc('reading_date')->first();
 
-        return view('petugas.meters.create', compact('meter', 'previousReading', 'defaultReadingDate'));
+        return view('petugas.meters.create', compact(
+            'meter', 'meterAwal', 'readingPeriod', 'defaultReadingDate', 'tercatat', 'bolehMencatat', 'currentReading',
+        ));
     }
 
     /**
@@ -84,7 +100,7 @@ class MeterReadingController extends Controller
      *
      * @return \Illuminate\Http\RedirectResponse
      */
-    public function store(Request $request)
+    public function store(Request $request, HitungPemakaianMeter $hitung)
     {
         $user = Auth::user();
         if ($user->role !== 'petugas') {
@@ -93,7 +109,7 @@ class MeterReadingController extends Controller
 
         $validated = $request->validate([
             'water_meter_id' => 'required|exists:water_meters,id',
-            'reading_value'  => 'required|numeric|min:0',
+            'reading_value'  => ['required'],
             'reading_date'   => 'required|date|before_or_equal:today',
             'photo'          => 'nullable|image|mimes:jpeg,png,jpg|max:5120',
             'notes'          => 'nullable|string|max:500',
@@ -101,8 +117,6 @@ class MeterReadingController extends Controller
             'water_meter_id.required' => 'Meter air wajib dipilih.',
             'water_meter_id.exists'   => 'Meter air tidak ditemukan.',
             'reading_value.required'  => 'Angka pembacaan wajib diisi.',
-            'reading_value.numeric'   => 'Angka pembacaan harus berupa angka.',
-            'reading_value.min'       => 'Angka pembacaan tidak boleh negatif.',
             'reading_date.required'   => 'Tanggal pembacaan wajib diisi.',
             'reading_date.date'       => 'Format tanggal tidak valid.',
             'reading_date.before_or_equal' => 'Tanggal tidak boleh di masa depan.',
@@ -113,32 +127,63 @@ class MeterReadingController extends Controller
 
         $meter = WaterMeter::findOrFail($validated['water_meter_id']);
         $readingPeriod = Carbon::parse($validated['reading_date'])->format('Y-m');
-        abort_unless(BillingPeriod::query()->where('billing_period', $readingPeriod)->where('status', 'active')->exists(), 422, 'Catatan meter harus untuk periode tagihan yang aktif.');
-        $latestReading = $meter->latestReading;
-        $previousValue = $latestReading ? (float) $latestReading->reading_value : 0;
-
-        if ((float) $validated['reading_value'] < $previousValue) {
-            return back()
-                ->withInput()
-                ->withErrors(['reading_value' => 'Angka meter tidak boleh lebih kecil dari pencatatan sebelumnya (' . $previousValue . ').']);
+        $akhir = $hitung->angkaKeSatuan($validated['reading_value'], 'reading_value');
+        if ($akhir > 9999999999) {
+            throw ValidationException::withMessages([
+                'reading_value' => 'Meter akhir maksimal 8 digit dan 2 angka desimal.',
+            ]);
         }
 
         $photoPath = null;
-        if ($request->hasFile('photo')) {
-            $photoPath = $request->file('photo')->store('meter-photos', 'public');
+        try {
+            if ($request->hasFile('photo')) {
+                $photoPath = $request->file('photo')->store('meter-photos', 'public');
+            }
+
+            $bill = DB::transaction(function () use ($validated, $readingPeriod, $akhir, $hitung, $user, $photoPath) {
+                $meter = WaterMeter::query()->lockForUpdate()->findOrFail($validated['water_meter_id']);
+                if ($meter->status !== 'active') {
+                    throw ValidationException::withMessages(['water_meter_id' => 'Meter air tidak aktif.']);
+                }
+
+                $period = BillingPeriod::query()->where('billing_period', $readingPeriod)
+                    ->where('status', 'active')->lockForUpdate()->first();
+                if ($period === null) {
+                    throw ValidationException::withMessages(['reading_date' => 'Catatan meter harus untuk periode tagihan yang aktif.']);
+                }
+
+                $nextPeriod = Carbon::parse($validated['reading_date'])->startOfMonth()->addMonth()->toDateString();
+                if ($meter->readings()->where('reading_date', '>=', $readingPeriod.'-01')
+                    ->where('reading_date', '<', $nextPeriod)->exists()) {
+                    throw ValidationException::withMessages(['reading_value' => 'Pelanggan ini sudah dicatat pada periode yang sama.']);
+                }
+                if ($meter->readings()->where('reading_date', '>=', $nextPeriod)->exists()
+                    || \App\Models\WaterBill::query()->where('water_meter_id', $meter->id)->where('billing_period', '>', $readingPeriod)->exists()) {
+                    throw ValidationException::withMessages(['reading_date' => 'Sudah ada pencatatan atau tagihan lanjutan. Pencatatan mundur tidak diizinkan.']);
+                }
+
+                $previousReading = $meter->readingBeforePeriod($readingPeriod);
+                $awal = $hitung->angkaKeSatuan($previousReading?->reading_value ?? '0', 'reading_value');
+                $hitung->hitung($awal, $akhir, 'reading_value');
+
+                $reading = MeterReading::create([
+                    'water_meter_id' => $meter->id,
+                    'reading_value' => $hitung::satuanKeDesimal($akhir),
+                    'previous_value' => $hitung::satuanKeDesimal($awal),
+                    'reading_date' => $validated['reading_date'],
+                    'photo' => $photoPath,
+                    'recorded_by' => $user->id,
+                    'notes' => $validated['notes'] ?? null,
+                ]);
+
+                return app(BillingService::class)->createBillFromReading($reading, $user->id);
+            }, 3);
+        } catch (Throwable $exception) {
+            if ($photoPath !== null) {
+                Storage::disk('public')->delete($photoPath);
+            }
+            throw $exception;
         }
-
-        $reading = MeterReading::create([
-            'water_meter_id' => $validated['water_meter_id'],
-            'reading_value'  => $validated['reading_value'],
-            'previous_value' => $previousValue,
-            'reading_date'   => $validated['reading_date'],
-            'photo'          => $photoPath,
-            'recorded_by'    => $user->id,
-            'notes'          => $validated['notes'] ?? null,
-        ]);
-
-        $bill = app(BillingService::class)->createBillFromReading($reading, $user->id);
 
         $message = 'Pembacaan meter ' . $meter->meter_number . ' berhasil disimpan.';
         if ($bill) {

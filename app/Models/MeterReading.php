@@ -5,10 +5,13 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class MeterReading extends Model
 {
     use HasFactory;
+    use SoftDeletes;
 
     /**
      * The attributes that are mass assignable.
@@ -36,6 +39,7 @@ class MeterReading extends Model
             'reading_date' => 'date',
             'reading_value' => 'decimal:2',
             'previous_value' => 'decimal:2',
+            'verified_at' => 'datetime',
         ];
     }
 
@@ -55,5 +59,10 @@ class MeterReading extends Model
     public function recorder(): BelongsTo
     {
         return $this->belongsTo(User::class, 'recorded_by');
+    }
+
+    public function changes(): HasMany
+    {
+        return $this->hasMany(MeterReadingChange::class)->orderByDesc('id');
     }
 }

@@ -12,6 +12,7 @@ use App\Http\Controllers\Masyarakat\ProfileController as MasyarakatProfileContro
 use App\Http\Controllers\Masyarakat\MeterHistoryController as MasyarakatMeterHistoryController;
 use App\Http\Controllers\Petugas\DashboardController as PetugasDashboardController;
 use App\Http\Controllers\Petugas\MeterReadingController as PetugasMeterReadingController;
+use App\Http\Controllers\Petugas\MeterReadingCorrectionController;
 use App\Http\Controllers\Petugas\PaymentController as PetugasPaymentController;
 use App\Http\Controllers\Petugas\ComplaintController as PetugasComplaintController;
 use App\Http\Controllers\Bendahara\DashboardController as BendaharaDashboardController;
@@ -38,6 +39,9 @@ Route::middleware('guest')->group(function () {
 });
 
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout')->middleware('auth');
+
+// Kompatibilitas pencatatan yang sudah dibuat pada branch PBI-09.
+require __DIR__.'/meter.php';
 
 // Fallback for navbar 'profil.index'
 Route::middleware('auth')->get('/profil', function () {
@@ -85,6 +89,11 @@ Route::middleware(['auth', 'role:petugas', 'permission:field.manage'])->prefix('
     Route::get('/meters', [PetugasMeterReadingController::class, 'index'])->name('meters.index');
     Route::get('/meters/{id}/catat', [PetugasMeterReadingController::class, 'create'])->name('meters.create');
     Route::post('/meters', [PetugasMeterReadingController::class, 'store'])->name('meters.store');
+
+    Route::get('/readings/{reading}', [MeterReadingCorrectionController::class, 'show'])->whereNumber('reading')->name('readings.show');
+    Route::get('/readings/{reading}/edit', [MeterReadingCorrectionController::class, 'edit'])->whereNumber('reading')->name('readings.edit');
+    Route::patch('/readings/{reading}', [MeterReadingCorrectionController::class, 'update'])->whereNumber('reading')->name('readings.update');
+    Route::post('/readings/{reading}/cancel', [MeterReadingCorrectionController::class, 'cancel'])->whereNumber('reading')->name('readings.cancel');
 
     Route::get('/payments', [PetugasPaymentController::class, 'index'])->name('payments.index');
     Route::post('/payments/kantor', [PetugasPaymentController::class, 'storeOffice'])->name('payments.office');
