@@ -21,6 +21,11 @@
         }
         const [whole, decimals = ''] = value.split('.');
         const end = Number(whole) * 100 + Number(decimals.padEnd(2, '0'));
+        if (form.dataset.maxSatuan && end > Number(form.dataset.maxSatuan)) {
+            error.textContent = 'Meter akhir maksimal 8 digit dan 2 angka desimal.';
+            input.setAttribute('aria-invalid', 'true');
+            return;
+        }
         if (end < start) {
             error.textContent = 'Meter akhir tidak boleh lebih kecil dari meter awal.';
             input.setAttribute('aria-invalid', 'true');

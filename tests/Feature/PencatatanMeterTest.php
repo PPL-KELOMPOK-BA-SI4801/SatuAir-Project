@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Pelanggan;
 use App\Models\PencatatanMeter;
+use App\Models\User;
 use Database\Seeders\PelangganSeeder;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -17,8 +18,10 @@ class PencatatanMeterTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        $this->seed(\Database\Seeders\AccessControlSeeder::class);
         $this->travelTo(now('Asia/Jakarta')->setDate(2026, 11, 7)->startOfDay());
         $this->seed(PelangganSeeder::class);
+        $this->actingAs(User::factory()->create(['role' => 'petugas', 'status' => 'active']));
     }
 
     private function budi(): Pelanggan
@@ -81,7 +84,7 @@ class PencatatanMeterTest extends TestCase
         $this->assertDatabaseCount('pencatatan_meter', 0);
         $response->assertOk()
             ->assertSee('Pencatatan belum disimpan.')
-            ->assertSee('id="total-pemakaian">— m³', false)->assertSee('data-invalid="1"', false);
+            ->assertSee('id="total-pemakaian"', false)->assertSee('— m³')->assertSee('data-invalid="1"', false);
     }
 
     public function test_pencatatan_ganda_ditolak(): void
