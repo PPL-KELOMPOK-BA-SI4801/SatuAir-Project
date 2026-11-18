@@ -36,6 +36,9 @@ class AccessControlController extends Controller
                 $permissionIds[] = $accessPermission;
                 $permissionIds = array_values(array_unique($permissionIds));
             }
+        } else {
+            $accessPermission = Permission::where('name', 'access.manage')->value('id');
+            $permissionIds = array_values(array_diff($permissionIds, [$accessPermission]));
         }
 
         DB::transaction(function () use ($role, $validated, $permissionIds): void {

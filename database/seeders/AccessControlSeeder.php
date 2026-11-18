@@ -27,32 +27,38 @@ class AccessControlSeeder extends Seeder
             'masyarakat' => ['label' => 'Masyarakat', 'description' => 'Pengguna layanan air.'],
         ];
 
+        $defaults = [
+            'bendahara' => ['dashboard.bendahara', 'access.manage', 'finance.manage', 'users.manage', 'meter.review'],
+            'petugas' => ['field.manage', 'payments.view'],
+            'masyarakat' => ['resident.use'],
+        ];
+
+        $newRoles = [];
+        foreach ($roles as $name => $attributes) {
+            $role = Role::firstOrCreate(['name' => $name], $attributes + ['is_system' => true]);
+            if ($role->wasRecentlyCreated) {
+                $newRoles[$name] = $role;
+            }
+        }
+
         $permissions = [
             ['name' => 'dashboard.bendahara', 'label' => 'Dashboard bendahara', 'group' => 'Bendahara'],
             ['name' => 'access.manage', 'label' => 'Mengatur hak akses', 'group' => 'Bendahara'],
             ['name' => 'finance.manage', 'label' => 'Mengelola keuangan', 'group' => 'Keuangan'],
+            ['name' => 'payments.view', 'label' => 'Melihat pembayaran', 'group' => 'Keuangan'],
             ['name' => 'users.manage', 'label' => 'Mengelola pengguna', 'group' => 'Pengguna'],
             ['name' => 'field.manage', 'label' => 'Mengelola meter dan pengaduan', 'group' => 'Operasional'],
             ['name' => 'resident.use', 'label' => 'Menggunakan layanan masyarakat', 'group' => 'Layanan'],
+            ['name' => 'meter.review', 'label' => 'Memeriksa pencatatan meter', 'group' => 'Operasional'],
         ];
-
-        foreach ($roles as $name => $attributes) {
-            Role::firstOrCreate(['name' => $name], $attributes + ['is_system' => true]);
-        }
 
         foreach ($permissions as $attributes) {
             Permission::firstOrCreate(['name' => $attributes['name']], $attributes);
         }
 
-        $defaults = [
-            'bendahara' => ['dashboard.bendahara', 'access.manage', 'finance.manage', 'users.manage'],
-            'petugas' => ['field.manage'],
-            'masyarakat' => ['resident.use'],
-        ];
-
-        foreach ($defaults as $roleName => $permissionNames) {
-            Role::where('name', $roleName)->firstOrFail()->permissions()->syncWithoutDetaching(
-                Permission::whereIn('name', $permissionNames)->pluck('id')
+        foreach ($newRoles as $roleName => $role) {
+            $role->permissions()->sync(
+                Permission::whereIn('name', $defaults[$roleName] ?? [])->pluck('id')
             );
         }
 

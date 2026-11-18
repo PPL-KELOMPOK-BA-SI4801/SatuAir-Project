@@ -11,7 +11,7 @@ class ComplaintController extends Controller
 {
     public function index(Request $request)
     {
-        if (Auth::user()?->role !== 'bendahara') {
+        if (! Auth::user()?->hasPermission('field.manage')) {
             abort(403, 'Akses ditolak.');
         }
 

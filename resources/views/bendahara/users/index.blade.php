@@ -22,20 +22,23 @@
 
     {{-- Filter --}}
     <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
-        <form method="GET" class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div>
+        <form method="GET" action="{{ route('bendahara.pengguna.index') }}" class="flex flex-col sm:flex-row sm:items-end gap-2">
+            <div class="w-full sm:w-48">
                 <label class="block text-xs font-semibold text-gray-600 mb-1">Peran</label>
-                <select name="role" class="w-full rounded-xl border-gray-200 focus:border-[#1976D2] focus:ring-1 focus:ring-[#1976D2] py-2 px-3 text-sm">
+                <select name="role" class="w-full rounded-lg border border-slate-300 focus:border-[#1976D2] focus:ring-1 focus:ring-[#1976D2] py-2 px-3 text-sm" aria-label="Filter berdasarkan peran">
                     <option value="">Semua Peran</option>
-                    <option value="bendahara" {{ request('role') === 'bendahara' ? 'selected' : '' }}>Bendahara</option>
+                    <option value="bendahara" {{ request('role') === 'bendahara' ? 'selected' : '' }}>Admin/Bendahara</option>
                     <option value="petugas" {{ request('role') === 'petugas' ? 'selected' : '' }}>Petugas</option>
                     <option value="masyarakat" {{ request('role') === 'masyarakat' ? 'selected' : '' }}>Masyarakat</option>
                 </select>
             </div>
-            <div class="flex items-end">
-                <button type="submit" class="px-4 py-2.5 bg-[#1976D2] hover:bg-[#1565C0] text-white text-sm font-semibold rounded-xl transition">
+            <div class="flex items-end gap-2">
+                <button type="submit" class="px-4 py-2 bg-[#1976D2] hover:bg-[#1565C0] text-white text-sm font-semibold rounded-lg transition">
                     Filter
                 </button>
+                @if(request()->filled('role'))
+                    <a href="{{ route('bendahara.pengguna.index') }}" class="px-3 py-2 text-sm font-medium text-slate-600 hover:text-[#12345A]">Reset</a>
+                @endif
             </div>
         </form>
     </div>
@@ -46,7 +49,13 @@
             <div class="p-12 text-center">
                 <div class="text-4xl mb-3">👥</div>
                 <h3 class="font-bold text-[#12345A] text-base">Tidak ada pengguna</h3>
-                <p class="text-xs text-gray-500 mt-1">Belum ada data pengguna terdaftar.</p>
+                <p class="text-xs text-gray-500 mt-1">
+                    @if(request()->filled('role'))
+                        Tidak ditemukan pengguna dengan peran {{ request('role') === 'bendahara' ? 'Admin/Bendahara' : ucfirst(request('role')) }}.
+                    @else
+                        Belum ada data pengguna terdaftar.
+                    @endif
+                </p>
             </div>
         @else
             <div class="overflow-x-auto">
@@ -77,7 +86,17 @@
                                 </td>
                                 <td class="px-4 py-3 text-gray-600">{{ $user->created_at ? $user->created_at->format('d M Y') : '-' }}</td>
                                 <td class="px-4 py-3 text-right">
-                                    @if($user->role === 'masyarakat' || $user->role === 'petugas')
+                                    @if($user->role === 'masyarakat')
+                                        <a href="{{ route('bendahara.pengguna.show', $user->id) }}" class="px-3 py-1 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold border border-slate-200 rounded-lg transition">
+                                            Detail
+                                        </a>
+                                        <a href="{{ route('bendahara.pengguna.profile.edit', $user->id) }}" class="px-3 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-semibold border border-blue-200 rounded-lg transition">
+                                            Edit
+                                        </a>
+                                        <a href="{{ route('bendahara.pengguna.edit', $user->id) }}" class="px-2 py-1 text-slate-500 hover:text-slate-700 text-[10px] font-medium transition">
+                                            Meter/Tarif
+                                        </a>
+                                    @elseif($user->role === 'petugas')
                                         <a href="{{ route('bendahara.pengguna.edit', $user->id) }}" class="px-3 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-semibold border border-blue-200 rounded-lg transition">
                                             Edit
                                         </a>

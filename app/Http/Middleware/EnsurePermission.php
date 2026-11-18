@@ -10,7 +10,9 @@ class EnsurePermission
 {
     public function handle(Request $request, Closure $next, string $permission): Response
     {
-        abort_unless($request->user() && $request->user()->hasPermission($permission), 403, 'Anda tidak memiliki hak untuk mengakses fitur ini.');
+        $user = $request->user();
+
+        abort_unless($user && $user->hasPermission($permission), 403, 'Anda tidak memiliki hak untuk mengakses fitur ini.');
 
         return $next($request);
     }

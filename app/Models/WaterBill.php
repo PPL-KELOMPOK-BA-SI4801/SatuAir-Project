@@ -7,10 +7,12 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class WaterBill extends Model
 {
     use HasFactory;
+    use SoftDeletes;
 
     /**
      * The attributes that are mass assignable.
@@ -31,6 +33,7 @@ class WaterBill extends Model
         'status',
         'year',
         'created_by',
+        'meter_reading_id',
     ];
 
     /**
@@ -83,6 +86,11 @@ class WaterBill extends Model
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function reading(): BelongsTo
+    {
+        return $this->belongsTo(MeterReading::class, 'meter_reading_id')->withTrashed();
     }
 
     // ==================== Scopes ====================

@@ -18,9 +18,6 @@ class PaymentController extends Controller
     public function index(Request $request)
     {
         $user = Auth::user();
-        if ($user->role !== 'petugas') {
-            abort(403, 'Akses ditolak.');
-        }
 
         $query = Payment::with(['user', 'waterBill.waterMeter', 'verifier'])
             ->orderByDesc('created_at');
@@ -68,9 +65,6 @@ class PaymentController extends Controller
     public function show($id)
     {
         $user = Auth::user();
-        if ($user->role !== 'petugas') {
-            abort(403, 'Akses ditolak.');
-        }
 
         $payment = Payment::with(['user', 'waterBill.waterMeter.area', 'waterBill.user', 'verifier'])
             ->findOrFail($id);

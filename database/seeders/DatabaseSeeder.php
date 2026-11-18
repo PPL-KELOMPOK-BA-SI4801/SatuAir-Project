@@ -204,6 +204,7 @@ class DatabaseSeeder extends Seeder
 
                 // Buat meter reading record agar tercatat pembacaan meteran fisik
                 MeterReading::create([
+                    'requires_review' => false,
                     'water_meter_id' => $meterObj->id,
                     'reading_value' => $currentVal,
                     'previous_value' => $prev,

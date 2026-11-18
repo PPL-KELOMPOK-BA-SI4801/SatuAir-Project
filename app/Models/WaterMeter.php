@@ -73,6 +73,18 @@ class WaterMeter extends Model
         return $this->hasOne(MeterReading::class)->latestOfMany('reading_date');
     }
 
+    /** Termasuk pembatalan, agar riwayat tetap dapat dibuka dari daftar PBI-08. */
+    public function latestRecordedReading(): HasOne
+    {
+        return $this->hasOne(MeterReading::class)->withTrashed()->latestOfMany('id');
+    }
+
+    public function readingBeforePeriod(string $period): ?MeterReading
+    {
+        return $this->readings()->where('reading_date', '<', $period.'-01')
+            ->orderByDesc('reading_date')->orderByDesc('id')->first();
+    }
+
     // ==================== Scopes ====================
 
     /**

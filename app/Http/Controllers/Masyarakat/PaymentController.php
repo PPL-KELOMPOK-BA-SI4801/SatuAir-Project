@@ -37,7 +37,6 @@ class PaymentController extends Controller
     public function create($billId)
     {
         $user = Auth::user();
-        abort_unless($user->role === 'masyarakat', 403);
 
         $bill = WaterBill::where('user_id', $user->id)
             ->where('status', 'unpaid')
@@ -68,7 +67,6 @@ class PaymentController extends Controller
     public function store(Request $request)
     {
         $user = Auth::user();
-        abort_unless($user->role === 'masyarakat', 403);
 
         $request->validate([
             'water_bill_id'  => ['required', 'exists:water_bills,id'],
@@ -79,53 +77,57 @@ class PaymentController extends Controller
             'payment_method.required' => 'Metode pembayaran wajib dipilih.',
         ]);
 
-        $bill = WaterBill::where('user_id', $user->id)
-            ->where('status', 'unpaid')
-            ->findOrFail($request->water_bill_id);
-        abort_unless(BillingPeriod::query()->where('billing_period', $bill->billing_period)->where('status', 'active')->exists(), 403, 'Pembayaran hanya tersedia untuk periode aktif.');
+        // Kunci baris yang sama dengan koreksi PBI-09 agar nominal tidak berubah
+        // bersamaan dengan pembuatan pembayaran.
+        return DB::transaction(function () use ($request, $user) {
+            $bill = WaterBill::where('user_id', $user->id)
+                ->where('status', 'unpaid')
+                ->lockForUpdate()->findOrFail($request->water_bill_id);
+            abort_unless(BillingPeriod::query()->where('billing_period', $bill->billing_period)->where('status', 'active')->exists(), 403, 'Pembayaran hanya tersedia untuk periode aktif.');
 
-        $existingPayment = Payment::where('water_bill_id', $bill->id)
-            ->where('status', 'pending')->latest()->first();
-        if ($existingPayment) {
-            return $existingPayment->paid_at
-                ? redirect()->route('masyarakat.bills.show', $bill->id)->with('success', 'Pembayaran Anda sedang menunggu konfirmasi bendahara.')
-                : redirect()->route('masyarakat.payments.instruction', $existingPayment->id);
-        }
+            $existingPayment = Payment::where('water_bill_id', $bill->id)
+                ->where('status', 'pending')->latest()->first();
+            if ($existingPayment) {
+                return $existingPayment->paid_at
+                    ? redirect()->route('masyarakat.bills.show', $bill->id)->with('success', 'Pembayaran Anda sedang menunggu konfirmasi bendahara.')
+                    : redirect()->route('masyarakat.payments.instruction', $existingPayment->id);
+            }
 
-        $method = $request->payment_method;
-        $adminFee = str_starts_with($method, 'va_') ? 1000 : 0;
-        $totalPay = $bill->total_amount + $adminFee;
-        $refNumber = 'PAY-' . date('Ymd') . '-' . strtoupper(Str::random(6));
+            $method = $request->payment_method;
+            $adminFee = str_starts_with($method, 'va_') ? 1000 : 0;
+            $totalPay = $bill->total_amount + $adminFee;
+            $refNumber = 'PAY-' . date('Ymd') . '-' . strtoupper(Str::random(6));
 
-        // Generate nomor VA dinamis
-        $vaNumber = null;
-        if (str_starts_with($method, 'va_')) {
-            $bankPrefix = match($method) {
-                'va_bri'     => '1019 2000',
-                'va_bca'     => '3901 0081',
-                'va_mandiri' => '8890 8021',
-                'va_bni'     => '8277 0019',
-                'va_bjb'     => '0011 0023',
-                'va_bsi'     => '9002 0014',
-                default      => '9988 0001',
-            };
-            $vaNumber = $bankPrefix . ' ' . str_pad($user->id, 4, '0', STR_PAD_LEFT) . ' ' . str_pad($bill->id, 4, '0', STR_PAD_LEFT);
-        }
+            // Generate nomor VA dinamis
+            $vaNumber = null;
+            if (str_starts_with($method, 'va_')) {
+                $bankPrefix = match($method) {
+                    'va_bri'     => '1019 2000',
+                    'va_bca'     => '3901 0081',
+                    'va_mandiri' => '8890 8021',
+                    'va_bni'     => '8277 0019',
+                    'va_bjb'     => '0011 0023',
+                    'va_bsi'     => '9002 0014',
+                    default      => '9988 0001',
+                };
+                $vaNumber = $bankPrefix . ' ' . str_pad($user->id, 4, '0', STR_PAD_LEFT) . ' ' . str_pad($bill->id, 4, '0', STR_PAD_LEFT);
+            }
 
-        $payment = Payment::create([
-            'water_bill_id'    => $bill->id,
-            'user_id'          => $user->id,
-            'amount'           => $totalPay,
-            'payment_method'   => $method,
-            'payment_proof'    => null,
-            'reference_number' => $refNumber,
-            'transaction_id'   => 'TRX-' . strtoupper(Str::random(8)),
-            'status'           => 'pending',
-            'paid_at'          => null,
-            'notes'            => $vaNumber ? json_encode(['va_number' => $vaNumber]) : null,
-        ]);
+            $payment = Payment::create([
+                'water_bill_id'    => $bill->id,
+                'user_id'          => $user->id,
+                'amount'           => $totalPay,
+                'payment_method'   => $method,
+                'payment_proof'    => null,
+                'reference_number' => $refNumber,
+                'transaction_id'   => 'TRX-' . strtoupper(Str::random(8)),
+                'status'           => 'pending',
+                'paid_at'          => null,
+                'notes'            => $vaNumber ? json_encode(['va_number' => $vaNumber]) : null,
+            ]);
 
-        return redirect()->route('masyarakat.payments.instruction', $payment->id);
+            return redirect()->route('masyarakat.payments.instruction', $payment->id);
+        }, 3);
     }
 
     /**
@@ -134,7 +136,6 @@ class PaymentController extends Controller
     public function instruction($id)
     {
         $user = Auth::user();
-        abort_unless($user->role === 'masyarakat', 403);
 
         $payment = Payment::where('user_id', $user->id)
             ->with('waterBill')
@@ -159,7 +160,6 @@ class PaymentController extends Controller
     public function simulateSuccess($id)
     {
         $user = Auth::user();
-        abort_unless($user->role === 'masyarakat', 403);
 
         $payment = Payment::with('waterBill')->where('user_id', $user->id)->findOrFail($id);
         abort_unless(BillingPeriod::query()->where('billing_period', $payment->waterBill?->billing_period)->where('status', 'active')->exists(), 403, 'Pembayaran hanya tersedia untuk periode aktif.');
@@ -191,7 +191,6 @@ class PaymentController extends Controller
     public function cancel($id)
     {
         $user = Auth::user();
-        abort_unless($user->role === 'masyarakat', 403);
 
         $payment = Payment::where('user_id', $user->id)
             ->where('status', 'pending')
@@ -213,7 +212,6 @@ class PaymentController extends Controller
     public function history(Request $request)
     {
         $user = Auth::user();
-        abort_unless($user->role === 'masyarakat', 403);
 
         $query = Payment::where('user_id', $user->id)
             ->with('waterBill');

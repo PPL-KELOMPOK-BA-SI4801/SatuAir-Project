@@ -4,7 +4,7 @@
 <div class="mx-auto max-w-6xl px-4 py-8">
     <div class="mb-6">
         <h1 class="text-2xl font-bold text-gray-900">Pengaturan Hak Akses</h1>
-        <p class="mt-1 text-sm text-gray-600">Atur nama, keterangan, dan izin untuk setiap peran.</p>
+        <p class="mt-1 text-sm text-gray-600">Centang izin untuk membuka fitur bagi pengguna dengan peran tersebut. Jika tidak dicentang, akses fitur ditolak.</p>
     </div>
 
     @if (session('success'))
@@ -16,7 +16,7 @@
 
     <div class="space-y-6">
         @foreach ($roles as $role)
-            <form method="POST" action="{{ route('bendahara.access.update', $role) }}" class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+            <form id="access-role-{{ $role->name }}" method="POST" action="{{ route('bendahara.access.update', $role) }}" class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
                 @csrf
                 @method('PUT')
                 <div class="grid gap-4 md:grid-cols-2">
@@ -35,8 +35,8 @@
                             <div class="space-y-2">
                                 @foreach ($groupPermissions as $permission)
                                     <label class="flex items-start gap-2 text-sm text-gray-700">
-                                        <input type="checkbox" name="permissions[]" value="{{ $permission->id }}" @checked($role->permissions->contains('id', $permission->id)) class="mt-0.5 rounded border-gray-300">
-                                        <span>{{ $permission->label }}</span>
+                                        <input id="permission-{{ $role->name }}-{{ str_replace('.', '-', $permission->name) }}" type="checkbox" name="permissions[]" value="{{ $permission->id }}" @checked($role->permissions->contains('id', $permission->id)) @disabled($permission->name === 'access.manage' && $role->name !== 'bendahara') class="mt-0.5 rounded border-gray-300">
+                                        <span>{{ $permission->label }}@if ($permission->name === 'access.manage' && $role->name !== 'bendahara') <span class="text-xs text-gray-500">(khusus Bendahara)</span>@endif</span>
                                     </label>
                                 @endforeach
                             </div>
