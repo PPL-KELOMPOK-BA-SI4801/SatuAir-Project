@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
+         bootstrap="vendor/autoload.php" colors="true" cacheResult="false">
+    <testsuites><testsuite name="Browser"><directory suffix="Test.php">tests/Browser</directory></testsuite></testsuites>
+    <php>
+        <env name="APP_ENV" value="dusk" force="true"/>
+        <env name="APP_CONFIG_CACHE" value="bootstrap/cache/config.dusk.php" force="true"/>
+        <env name="BCRYPT_ROUNDS" value="4"/>
+        <env name="MAIL_MAILER" value="array"/>
+        <env name="QUEUE_CONNECTION" value="sync"/>
+    </php>
+</phpunit>

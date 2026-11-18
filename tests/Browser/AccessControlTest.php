@@ -2,173 +2,116 @@
 
 namespace Tests\Browser;
 
-use App\Models\Permission;
-use App\Models\Role;
-use App\Models\User;
-use Database\Seeders\AccessControlSeeder;
-use Illuminate\Foundation\Testing\DatabaseMigrations;
+use App\Models\{Permission, Role};
 use Laravel\Dusk\Browser;
-use Tests\DuskTestCase;
+use PHPUnit\Framework\Attributes\Group;
+use Tests\Browser\Support\TeamDuskTestCase;
 
-/**
- * PBI-02 – Dusk Browser Test: Pengaturan Hak Akses
- *
- * Skenario yang diuji:
- * 1. Bendahara membuka halaman Hak Akses → berhasil.
- * 2. Bendahara mengubah checkbox → tersimpan di database.
- * 3. Petugas yang mendapat izin bisa membuka fitur.
- * 4. Setelah izin dicabut, akses petugas ditolak (403).
- * 5. Masyarakat yang mendapat izin resident.use bisa membuka dashboard.
- * 6. Bendahara tidak bisa menghapus izin access.manage miliknya sendiri.
- */
-class AccessControlTest extends DuskTestCase
+/** Melengkapi tes Saptya yang sudah ada, mengikuti TC-01 sampai TC-08 Jira PBI-8. */
+#[Group('PBI-8')]
+class AccessControlTest extends TeamDuskTestCase
 {
-    use DatabaseMigrations;
+    private function role(string $name): Role { return Role::where('name', $name)->firstOrFail(); }
+    private function permission(string $name): int { return Permission::where('name', $name)->value('id'); }
+    private function form(string $name): string { return 'form[action$="/hak-akses/'.$this->role($name)->id.'"]'; }
 
-    protected function setUp(): void
+    public function test_tc01_bendahara_dengan_permission_membuka_hak_akses(): void
     {
-        parent::setUp();
-        $this->seed(AccessControlSeeder::class);
-    }
-
-    // ─────────────────────────────────────────────────────────────
-    // 1. Bendahara berhasil membuka halaman Hak Akses
-    // ─────────────────────────────────────────────────────────────
-    public function test_bendahara_dapat_membuka_halaman_hak_akses(): void
-    {
-        $bendahara = User::factory()->create(['role' => 'bendahara']);
-
-        $this->browse(function (Browser $browser) use ($bendahara) {
-            $browser->loginAs($bendahara)
-                    ->visit(route('bendahara.access.index'))
-                    ->assertSee('Pengaturan Hak Akses')
-                    ->assertSee('Simpan');
+        $this->browse(function (Browser $b) {
+            $this->login($b, $this->bendahara)->visit('/bendahara/hak-akses')->assertSee('Pengaturan Hak Akses');
+            $this->evidence($b, 'PBI-8-TC01');
         });
     }
 
-    // ─────────────────────────────────────────────────────────────
-    // 2. Petugas tanpa izin access.manage diblokir (403)
-    // ─────────────────────────────────────────────────────────────
-    public function test_petugas_tidak_bisa_membuka_halaman_hak_akses(): void
+    public function test_tc02_bendahara_tanpa_permission_ditolak_403(): void
     {
-        $petugas = User::factory()->create(['role' => 'petugas']);
-
-        $this->browse(function (Browser $browser) use ($petugas) {
-            $browser->loginAs($petugas)
-                    ->visit(route('bendahara.access.index'))
-                    ->assertSee('403');
+        $this->browse(function (Browser $b) {
+            $this->login($b, $this->bendahara);
+            $this->role('bendahara')->permissions()->detach($this->permission('access.manage'));
+            $b->visit('/bendahara/hak-akses')->assertSee('403');
+            $this->assertHttpStatus($b, 403);
+            $this->evidence($b, 'PBI-8-TC02');
         });
     }
 
-    // ─────────────────────────────────────────────────────────────
-    // 3. Bendahara mengubah checkbox → tersimpan di database
-    // ─────────────────────────────────────────────────────────────
-    public function test_bendahara_menyimpan_perubahan_permission_ke_database(): void
+    public function test_tc03_permission_valid_tersimpan_dan_akses_berubah(): void
     {
-        $bendahara = User::factory()->create(['role' => 'bendahara']);
-        $roleP     = Role::where('name', 'petugas')->firstOrFail();
-        $permP     = Permission::where('name', 'finance.manage')->firstOrFail();
-
-        // Pastikan petugas belum punya finance.manage
-        $roleP->permissions()->detach($permP->id);
-
-        $this->browse(function (Browser $browser) use ($bendahara, $roleP, $permP) {
-            $browser->loginAs($bendahara)
-                    ->visit(route('bendahara.access.index'))
-                    // Centang izin finance.manage pada form peran Petugas
-                    ->check("permissions[]", $permP->id)
-                    ->press("Simpan {$roleP->label}")
-                    ->waitForText('berhasil diperbarui');
-        });
-
-        // Verifikasi database
-        $this->assertDatabaseHas('permission_role', [
-            'role_id'       => $roleP->id,
-            'permission_id' => $permP->id,
-        ]);
-    }
-
-    // ─────────────────────────────────────────────────────────────
-    // 4. Petugas yang mendapat izin field.manage bisa akses fitur meter
-    // ─────────────────────────────────────────────────────────────
-    public function test_petugas_dengan_izin_field_manage_bisa_akses_meter(): void
-    {
-        $petugas = User::factory()->create(['role' => 'petugas']);
-        // Pastikan petugas punya field.manage (default seeder sudah assign)
-        $roleP   = Role::where('name', 'petugas')->firstOrFail();
-        $permF   = Permission::where('name', 'field.manage')->firstOrFail();
-        $roleP->permissions()->syncWithoutDetaching([$permF->id]);
-
-        $this->browse(function (Browser $browser) use ($petugas) {
-            $browser->loginAs($petugas)
-                    ->visit(route('petugas.dashboard'))
-                    ->assertDontSee('403')
-                    ->assertDontSee('Akses ditolak');
+        $role = $this->role('petugas');
+        $permission = $this->permission('field.manage');
+        $role->permissions()->detach($permission);
+        $this->browse(function (Browser $b) use ($role, $permission) {
+            $this->login($b, $this->bendahara)->visit('/bendahara/hak-akses')
+                ->check($this->form('petugas').' input[type="checkbox"][value="'.$permission.'"]')
+                ->press('Simpan Petugas')->waitForText('Hak akses untuk Petugas berhasil diperbarui.');
+            $this->assertDatabaseHas('permission_role', ['role_id' => $role->id, 'permission_id' => $permission]);
+            $this->login($b, $this->petugas)->visit('/petugas/meters')->assertSee('Pencatatan Water Meter');
+            $this->evidence($b, 'PBI-8-TC03');
         });
     }
 
-    // ─────────────────────────────────────────────────────────────
-    // 5. Petugas yang dicabut izin field.manage diblokir
-    // ─────────────────────────────────────────────────────────────
-    public function test_petugas_tanpa_izin_field_manage_diblokir_dari_meter(): void
+    public function test_tc04_permission_id_tidak_tersedia_ditolak_tanpa_perubahan(): void
     {
-        $bendahara = User::factory()->create(['role' => 'bendahara']);
-        $petugas   = User::factory()->create(['role' => 'petugas']);
-
-        // Cabut SEMUA permission dari petugas
-        $roleP = Role::where('name', 'petugas')->firstOrFail();
-        $roleP->permissions()->sync([]);
-
-        $this->browse(function (Browser $browser) use ($petugas) {
-            $browser->loginAs($petugas)
-                    ->visit(route('petugas.dashboard'))
-                    ->assertSee('403');
+        $role = $this->role('petugas');
+        $before = $role->permissions()->pluck('permissions.id')->all();
+        $this->browse(function (Browser $b) use ($role, $before) {
+            $this->login($b, $this->bendahara)->visit('/bendahara/hak-akses');
+            // Simulasikan request termanipulasi, tetap dikirim oleh form browser dengan CSRF asli.
+            $selector = json_encode($this->form('petugas'));
+            $b->script("const f=document.querySelector($selector); const i=document.createElement('input'); i.type='hidden'; i.name='permissions[]'; i.value='999999'; f.appendChild(i);");
+            $b->press('Simpan Petugas')->waitForText('Periksa kembali isian.');
+            $this->assertEqualsCanonicalizing($before, $role->permissions()->pluck('permissions.id')->all());
+            $this->assertDatabaseMissing('permission_role', ['role_id' => $role->id, 'permission_id' => 999999]);
+            $this->evidence($b, 'PBI-8-TC04');
         });
     }
 
-    // ─────────────────────────────────────────────────────────────
-    // 6. Masyarakat dengan resident.use bisa membuka dashboard
-    // ─────────────────────────────────────────────────────────────
-    public function test_masyarakat_dengan_izin_resident_use_bisa_membuka_dashboard(): void
+    public function test_tc05_masyarakat_tanpa_permission_ditolak(): void
     {
-        $masyarakat = User::factory()->create(['role' => 'masyarakat']);
-        $roleM      = Role::where('name', 'masyarakat')->firstOrFail();
-        $permR      = Permission::where('name', 'resident.use')->firstOrFail();
-        $roleM->permissions()->syncWithoutDetaching([$permR->id]);
-
-        $this->browse(function (Browser $browser) use ($masyarakat) {
-            $browser->loginAs($masyarakat)
-                    ->visit(route('masyarakat.dashboard'))
-                    ->assertDontSee('403');
+        $this->browse(function (Browser $b) {
+            $this->login($b, $this->rina);
+            $this->role('masyarakat')->permissions()->detach($this->permission('resident.use'));
+            $b->visit('/masyarakat/meter-history')->assertSee('403');
+            $this->assertHttpStatus($b, 403);
+            $this->evidence($b, 'PBI-8-TC05');
         });
     }
 
-    // ─────────────────────────────────────────────────────────────
-    // 7. Bendahara tidak bisa menghapus izin access.manage dirinya sendiri
-    // ─────────────────────────────────────────────────────────────
-    public function test_bendahara_tidak_bisa_cabut_izin_access_manage_sendiri(): void
+    public function test_tc06_petugas_tanpa_permission_ditolak(): void
     {
-        $bendahara = User::factory()->create(['role' => 'bendahara']);
-        $roleB     = Role::where('name', 'bendahara')->firstOrFail();
-
-        $this->browse(function (Browser $browser) use ($bendahara, $roleB) {
-            $browser->loginAs($bendahara)
-                    ->visit(route('bendahara.access.index'));
-
-            // Hapus centang semua lalu simpan
-            $browser->script("
-                document.querySelectorAll('form').forEach(function(form) {
-                    if (form.action.includes('/{$roleB->id}')) {
-                        form.querySelectorAll('input[type=checkbox]').forEach(cb => cb.checked = false);
-                        form.querySelector('button[type=submit]').click();
-                    }
-                });
-            ");
-
-            $browser->waitForText('berhasil diperbarui');
+        $this->browse(function (Browser $b) {
+            $this->login($b, $this->petugas);
+            $this->role('petugas')->permissions()->detach($this->permission('field.manage'));
+            $b->visit('/petugas/meters')->assertSee('403');
+            $this->assertHttpStatus($b, 403);
+            $this->evidence($b, 'PBI-8-TC06');
         });
+    }
 
-        // Bendahara tetap punya access.manage di database
-        $this->assertTrue($bendahara->fresh()->hasPermission('access.manage'));
+    public function test_tc07_url_langsung_tetap_memeriksa_izin(): void
+    {
+        $this->browse(function (Browser $b) {
+            $this->login($b, $this->petugas)->visit('/bendahara/hak-akses')->assertSee('403');
+            $this->assertHttpStatus($b, 403);
+            $b->visit('/bendahara/pengguna')->assertSee('403');
+            $this->assertHttpStatus($b, 403);
+            $this->evidence($b, 'PBI-8-TC07');
+        });
+    }
+
+    public function test_tc08_bendahara_tidak_bisa_mencabut_access_manage_sendiri(): void
+    {
+        $role = $this->role('bendahara');
+        $permission = $this->permission('access.manage');
+        $this->browse(function (Browser $b) use ($role, $permission) {
+            $this->login($b, $this->bendahara)->visit('/bendahara/hak-akses')
+                ->assertDisabled($this->form('bendahara').' input[type="checkbox"][value="'.$permission.'"]');
+            // Hilangkan juga hidden input untuk membuktikan server tidak mempercayai request.
+            $selector = json_encode($this->form('bendahara').' input[name="permissions[]"][value="'.$permission.'"]');
+            $b->script("document.querySelectorAll($selector).forEach(e=>e.remove())");
+            $b->press('Simpan Bendahara')->waitForText('Hak akses untuk Bendahara berhasil diperbarui.');
+            $this->assertDatabaseHas('permission_role', ['role_id' => $role->id, 'permission_id' => $permission]);
+            $b->visit('/bendahara/hak-akses')->assertSee('Pengaturan Hak Akses');
+            $this->evidence($b, 'PBI-8-TC08');
+        });
     }
 }
