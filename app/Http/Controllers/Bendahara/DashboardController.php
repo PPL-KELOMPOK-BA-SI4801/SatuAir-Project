@@ -18,7 +18,7 @@ class DashboardController extends Controller
     public function index()
     {
         $user = Auth::user();
-        if (! $user?->hasPermission('dashboard.bendahara')) {
+        if ($user?->role !== 'bendahara') {
             abort(403, 'Akses ditolak.');
         }
 

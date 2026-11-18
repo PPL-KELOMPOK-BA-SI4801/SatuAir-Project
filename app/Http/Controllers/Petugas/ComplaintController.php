@@ -24,6 +24,9 @@ class ComplaintController extends Controller
     public function index(Request $request)
     {
         $user = Auth::user();
+        if ($user->role !== 'petugas') {
+            abort(403, 'Akses ditolak.');
+        }
 
         $query = Complaint::with(['user', 'category', 'area', 'assignee'])
             ->orderByDesc('created_at');
@@ -88,6 +91,9 @@ class ComplaintController extends Controller
     public function show($id)
     {
         $user = Auth::user();
+        if ($user->role !== 'petugas') {
+            abort(403, 'Akses ditolak.');
+        }
 
         $complaint = Complaint::with([
             'user', 'category', 'area', 'assignee',
@@ -108,6 +114,9 @@ class ComplaintController extends Controller
     public function update(Request $request, $id)
     {
         $user = Auth::user();
+        if ($user->role !== 'petugas') {
+            abort(403, 'Akses ditolak.');
+        }
 
         $validated = $request->validate([
             'status' => 'required|in:verified,in_progress,resolved,rejected',

@@ -218,6 +218,6 @@ class RekapController extends Controller
 
     private function authorizeBendahara(): void
     {
-        abort_unless(Auth::user()?->hasPermission('finance.manage'), 403, 'Akses ditolak.');
+        abort_unless(Auth::user()?->role === 'bendahara', 403, 'Akses ditolak.');
     }
 }

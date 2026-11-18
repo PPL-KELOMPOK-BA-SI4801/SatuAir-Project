@@ -135,7 +135,7 @@ class PemeriksaanPemakaian
 
     private function authorize(User $actor): void
     {
-        abort_unless($actor->status === 'active' && $actor->hasPermission('meter.review'), 403);
+        abort_unless($actor->role === 'bendahara' && $actor->status === 'active' && $actor->hasPermission('finance.manage'), 403);
     }
 
     private function fail(string $field, string $message): never

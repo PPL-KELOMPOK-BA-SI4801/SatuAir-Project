@@ -62,7 +62,7 @@ class MeterReadingCorrectionController extends Controller
 
     private function authorizePetugas(Request $request): void
     {
-        abort_unless($request->user()?->hasPermission('field.manage'), 403, 'Akses ditolak.');
+        abort_unless($request->user()?->role === 'petugas', 403, 'Akses ditolak.');
     }
 
     private function validateChange(Request $request, bool $editing): array

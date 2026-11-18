@@ -37,6 +37,7 @@ class PaymentController extends Controller
     public function create($billId)
     {
         $user = Auth::user();
+        abort_unless($user->role === 'masyarakat', 403);
 
         $bill = WaterBill::where('user_id', $user->id)
             ->where('status', 'unpaid')
@@ -67,6 +68,7 @@ class PaymentController extends Controller
     public function store(Request $request)
     {
         $user = Auth::user();
+        abort_unless($user->role === 'masyarakat', 403);
 
         $request->validate([
             'water_bill_id'  => ['required', 'exists:water_bills,id'],
@@ -136,6 +138,7 @@ class PaymentController extends Controller
     public function instruction($id)
     {
         $user = Auth::user();
+        abort_unless($user->role === 'masyarakat', 403);
 
         $payment = Payment::where('user_id', $user->id)
             ->with('waterBill')
@@ -160,6 +163,7 @@ class PaymentController extends Controller
     public function simulateSuccess($id)
     {
         $user = Auth::user();
+        abort_unless($user->role === 'masyarakat', 403);
 
         $payment = Payment::with('waterBill')->where('user_id', $user->id)->findOrFail($id);
         abort_unless(BillingPeriod::query()->where('billing_period', $payment->waterBill?->billing_period)->where('status', 'active')->exists(), 403, 'Pembayaran hanya tersedia untuk periode aktif.');
@@ -191,6 +195,7 @@ class PaymentController extends Controller
     public function cancel($id)
     {
         $user = Auth::user();
+        abort_unless($user->role === 'masyarakat', 403);
 
         $payment = Payment::where('user_id', $user->id)
             ->where('status', 'pending')
@@ -212,6 +217,7 @@ class PaymentController extends Controller
     public function history(Request $request)
     {
         $user = Auth::user();
+        abort_unless($user->role === 'masyarakat', 403);
 
         $query = Payment::where('user_id', $user->id)
             ->with('waterBill');

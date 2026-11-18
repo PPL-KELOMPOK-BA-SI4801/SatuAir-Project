@@ -64,7 +64,7 @@ Route::middleware(['auth', 'role:bendahara'])
     });
 
 // Masyarakat Routes
-Route::middleware(['auth', 'permission:resident.use'])->prefix('masyarakat')->name('masyarakat.')->group(function () {
+Route::middleware(['auth', 'role:masyarakat', 'permission:resident.use'])->prefix('masyarakat')->name('masyarakat.')->group(function () {
     Route::get('/dashboard', [MasyarakatDashboardController::class, 'index'])->name('dashboard');
 
     // Riwayat pencatatan meter
@@ -94,7 +94,7 @@ Route::middleware(['auth', 'permission:resident.use'])->prefix('masyarakat')->na
 });
 
 // Petugas Routes
-Route::middleware(['auth', 'permission:field.manage'])->prefix('petugas')->name('petugas.')->group(function () {
+Route::middleware(['auth', 'role:petugas', 'permission:field.manage'])->prefix('petugas')->name('petugas.')->group(function () {
     Route::get('/dashboard', [PetugasDashboardController::class, 'index'])->name('dashboard');
 
     Route::get('/meters', [PetugasMeterReadingController::class, 'index'])->name('meters.index');
@@ -106,19 +106,17 @@ Route::middleware(['auth', 'permission:field.manage'])->prefix('petugas')->name(
     Route::patch('/readings/{reading}', [MeterReadingCorrectionController::class, 'update'])->whereNumber('reading')->name('readings.update');
     Route::post('/readings/{reading}/cancel', [MeterReadingCorrectionController::class, 'cancel'])->whereNumber('reading')->name('readings.cancel');
 
+    Route::get('/payments', [PetugasPaymentController::class, 'index'])->name('payments.index');
+    Route::post('/payments/kantor', [PetugasPaymentController::class, 'storeOffice'])->name('payments.office');
+    Route::get('/payments/{id}', [PetugasPaymentController::class, 'show'])->name('payments.show');
+
     Route::get('/complaints', [PetugasComplaintController::class, 'index'])->name('complaints.index');
     Route::get('/complaints/{id}', [PetugasComplaintController::class, 'show'])->name('complaints.show');
     Route::put('/complaints/{id}', [PetugasComplaintController::class, 'update'])->name('complaints.update');
 });
 
-Route::middleware(['auth', 'permission:payments.view'])->prefix('petugas')->name('petugas.')->group(function () {
-    Route::get('/payments', [PetugasPaymentController::class, 'index'])->name('payments.index');
-    Route::post('/payments/kantor', [PetugasPaymentController::class, 'storeOffice'])->name('payments.office');
-    Route::get('/payments/{id}', [PetugasPaymentController::class, 'show'])->name('payments.show');
-});
-
-// Pemeriksaan meter memiliki izin tersendiri supaya bisa diatur terpisah.
-Route::middleware(['auth', 'permission:meter.review'])->prefix('bendahara')->name('bendahara.')->group(function () {
+// Bendahara Routes
+Route::middleware(['auth', 'role:bendahara', 'permission:finance.manage'])->prefix('bendahara')->name('bendahara.')->group(function () {
     Route::get('/pemeriksaan', [MeterReadingReviewController::class, 'index'])->name('reviews.index');
     Route::get('/pemeriksaan/pencatatan/{reading}', [MeterReadingReviewController::class, 'reading'])->whereNumber('reading')->name('reviews.reading');
     Route::get('/pemeriksaan/pencatatan/{reading}/buat', [MeterReadingReviewController::class, 'create'])->whereNumber('reading')->name('reviews.create');
@@ -128,10 +126,6 @@ Route::middleware(['auth', 'permission:meter.review'])->prefix('bendahara')->nam
     Route::patch('/pemeriksaan/{review}', [MeterReadingReviewController::class, 'update'])->whereNumber('review')->name('reviews.update');
     Route::delete('/pemeriksaan/{review}', [MeterReadingReviewController::class, 'destroy'])->whereNumber('review')->name('reviews.destroy');
     Route::post('/pemeriksaan/{review}/finalisasi', [MeterReadingReviewController::class, 'finalize'])->whereNumber('review')->name('reviews.finalize');
-});
-
-// Fitur keuangan dapat diberikan kepada peran mana pun melalui halaman Hak Akses.
-Route::middleware(['auth', 'permission:finance.manage'])->prefix('bendahara')->name('bendahara.')->group(function () {
     Route::get('/dashboard', [BendaharaDashboardController::class, 'index'])->name('dashboard')->middleware('permission:dashboard.bendahara');
     Route::get('/rekap', [BendaharaRekapController::class, 'index'])->name('rekap.index');
     Route::post('/rekap/lock', [BendaharaRekapController::class, 'lock'])->name('rekap.lock');
@@ -144,9 +138,6 @@ Route::middleware(['auth', 'permission:finance.manage'])->prefix('bendahara')->n
     Route::put('/pengguna/{user}/profil', [BendaharaUserController::class, 'updateCustomerProfile'])->name('pengguna.profile.update')->middleware('permission:users.manage');
     Route::get('/pengguna/{user}/edit', [BendaharaUserController::class, 'edit'])->name('pengguna.edit')->middleware('permission:users.manage');
     Route::put('/pengguna/{user}', [BendaharaUserController::class, 'update'])->name('pengguna.update')->middleware('permission:users.manage');
-});
-
-Route::middleware(['auth', 'permission:field.manage'])->prefix('bendahara')->name('bendahara.')->group(function () {
     Route::get('/pengaduan', [BendaharaComplaintController::class, 'index'])->name('complaints.index');
 });
 

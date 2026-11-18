@@ -16,7 +16,7 @@ class PencatatanMeterController extends Controller
 {
     public function index(Request $request): View
     {
-        abort_unless($request->user()?->hasPermission('field.manage'), 403, 'Akses ditolak.');
+        abort_unless($request->user()->isPetugas(), 403);
         $filter = $request->validate(['q' => 'nullable|string|max:100', 'wilayah' => 'nullable|string|max:100']);
         $periode = now('Asia/Jakarta')->format('Y-m');
         $pelanggan = Pelanggan::query()
@@ -34,7 +34,7 @@ class PencatatanMeterController extends Controller
 
     public function create(Pelanggan $pelanggan): View
     {
-        abort_unless(auth()->user()?->hasPermission('field.manage'), 403, 'Akses ditolak.');
+        abort_unless(auth()->user()->isPetugas(), 403);
         $periode = now('Asia/Jakarta')->format('Y-m');
 
         return view('meter.create', [
@@ -46,7 +46,7 @@ class PencatatanMeterController extends Controller
 
     public function store(Request $request, Pelanggan $pelanggan, HitungPemakaianMeter $hitung): RedirectResponse
     {
-        abort_unless($request->user()?->hasPermission('field.manage'), 403, 'Akses ditolak.');
+        abort_unless($request->user()->isPetugas(), 403);
         $input = $request->validate([
             'meter_akhir' => ['required'],
             'periode' => ['required', 'date_format:Y-m', 'in:'.now('Asia/Jakarta')->format('Y-m')],

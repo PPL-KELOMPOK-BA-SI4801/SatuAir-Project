@@ -32,6 +32,9 @@ class MeterReadingController extends Controller
     public function index(Request $request)
     {
         $user = Auth::user();
+        if ($user->role !== 'petugas') {
+            abort(403, 'Akses ditolak.');
+        }
 
         $areas = Area::where('is_active', true)->orderBy('name')->get();
 
@@ -66,6 +69,9 @@ class MeterReadingController extends Controller
     public function create($waterMeterId, HitungPemakaianMeter $hitung)
     {
         $user = Auth::user();
+        if ($user->role !== 'petugas') {
+            abort(403, 'Akses ditolak.');
+        }
 
         $meter = WaterMeter::with(['user', 'area', 'latestReading'])->findOrFail($waterMeterId);
         $period = BillingPeriod::query()->where('status', 'active')->first();
@@ -96,6 +102,9 @@ class MeterReadingController extends Controller
     public function store(Request $request, HitungPemakaianMeter $hitung)
     {
         $user = Auth::user();
+        if ($user->role !== 'petugas') {
+            abort(403, 'Akses ditolak.');
+        }
 
         $validated = $request->validate([
             'water_meter_id' => 'required|exists:water_meters,id',

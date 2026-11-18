@@ -19,7 +19,7 @@ class UserController extends Controller
 {
     public function index(Request $request)
     {
-        if (! Auth::user()?->hasPermission('users.manage')) {
+        if (Auth::user()?->role !== 'bendahara') {
             abort(403, 'Akses ditolak.');
         }
 
@@ -97,7 +97,7 @@ class UserController extends Controller
 
     private function authorizeCustomerProfile(User $user): void
     {
-        abort_unless(Auth::user()?->hasPermission('users.manage'), 403, 'Akses ditolak.');
+        abort_unless(Auth::user()?->role === 'bendahara', 403, 'Akses ditolak.');
         abort_unless($user->role === 'masyarakat', 404);
     }
 
@@ -116,7 +116,7 @@ class UserController extends Controller
      */
     public function edit(User $user)
     {
-        if (! Auth::user()?->hasPermission('users.manage')) {
+        if (Auth::user()?->role !== 'bendahara') {
             abort(403, 'Akses ditolak.');
         }
 
@@ -136,7 +136,7 @@ class UserController extends Controller
      */
     public function update(Request $request, User $user)
     {
-        if (! Auth::user()?->hasPermission('users.manage')) {
+        if (Auth::user()?->role !== 'bendahara') {
             abort(403, 'Akses ditolak.');
         }
 

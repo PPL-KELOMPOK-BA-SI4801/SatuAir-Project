@@ -13,6 +13,7 @@ class BillController extends Controller
     public function index(Request $request)
     {
         $user = Auth::user();
+        abort_unless($user->role === 'masyarakat', 403);
 
         $query = WaterBill::where('user_id', $user->id)
             ->where('status', 'unpaid')
@@ -46,6 +47,7 @@ class BillController extends Controller
     public function show($id)
     {
         $user = Auth::user();
+        abort_unless($user->role === 'masyarakat', 403);
 
         $bill = WaterBill::where('user_id', $user->id)
             ->with(['payment', 'waterMeter'])
