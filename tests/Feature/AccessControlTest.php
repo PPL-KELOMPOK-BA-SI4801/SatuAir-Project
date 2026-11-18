@@ -101,6 +101,16 @@ class AccessControlTest extends TestCase
         $this->actingAs($petugas)->get(route('bendahara.access.index'))->assertForbidden();
     }
 
+    public function test_user_management_permission_does_not_grant_bendahara_own_profile(): void
+    {
+        $petugas = User::factory()->create(['role' => 'petugas']);
+        $role = Role::where('name', 'petugas')->firstOrFail();
+        $permission = \App\Models\Permission::where('name', 'users.manage')->firstOrFail();
+        $role->permissions()->attach($permission);
+
+        $this->actingAs($petugas)->get(route('bendahara.profile.edit'))->assertForbidden();
+    }
+
     public function test_bendahara_cannot_remove_its_own_access_management_permission(): void
     {
         $user = User::factory()->create(['role' => 'bendahara']);

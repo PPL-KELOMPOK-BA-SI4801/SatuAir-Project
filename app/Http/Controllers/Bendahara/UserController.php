@@ -76,7 +76,7 @@ class UserController extends Controller
 
     public function editOwnProfile()
     {
-        abort_unless(Auth::user()?->hasPermission('users.manage'), 403, 'Akses ditolak.');
+        abort_unless(Auth::user()?->role === 'bendahara', 403, 'Akses ditolak.');
 
         return view('lihat-edit-pelanggan', [
             'customer' => Auth::user(),
