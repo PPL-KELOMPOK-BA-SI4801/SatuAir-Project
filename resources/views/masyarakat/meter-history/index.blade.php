@@ -18,14 +18,14 @@
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
             <p class="text-sm text-gray-500">Total Pencatatan</p>
-            <h2 class="text-2xl font-bold text-[#12345A] mt-2">
+            <h2 dusk="history-count" class="text-2xl font-bold text-[#12345A] mt-2">
                 {{ $totalRecords }}
             </h2>
         </div>
 
         <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
             <p class="text-sm text-gray-500">Total Penggunaan Air</p>
-            <h2 class="text-2xl font-bold text-blue-600 mt-2">
+            <h2 dusk="history-usage" class="text-2xl font-bold text-blue-600 mt-2">
                 {{ number_format($totalUsage, 2, ',', '.') }} m³
             </h2>
         </div>

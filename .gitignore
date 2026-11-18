@@ -27,6 +27,14 @@
 Homestead.json
 Homestead.yaml
 Thumbs.db
+/tests/Browser/screenshots/*
+!/tests/Browser/screenshots/.gitignore
+/tests/Browser/console/*
+!/tests/Browser/console/.gitignore
+/tests/Browser/source/*
+!/tests/Browser/source/.gitignore
+/tests/Browser/artifacts/*
+!/tests/Browser/artifacts/.gitignore
 
 /bootstrap/cache/*.php
 /database/*.local.sqlite

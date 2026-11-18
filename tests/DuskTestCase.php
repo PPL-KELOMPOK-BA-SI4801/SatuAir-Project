@@ -17,7 +17,7 @@ abstract class DuskTestCase extends BaseTestCase
     #[BeforeClass]
     public static function prepare(): void
     {
-        if (! static::runningInSail()) {
+        if (! static::runningInSail() && ! getenv('DUSK_DRIVER_URL')) {
             static::startChromeDriver(['--port=9515']);
         }
     }
@@ -30,12 +30,15 @@ abstract class DuskTestCase extends BaseTestCase
         $options = (new ChromeOptions)->addArguments(collect([
             $this->shouldStartMaximized() ? '--start-maximized' : '--window-size=1920,1080',
             '--disable-search-engine-choice-screen',
-        ])->unless($this->hasHeadlessDisabled(), function (Collection $items) {
+        ])->when(filter_var(getenv('DUSK_HEADLESS') ?: false, FILTER_VALIDATE_BOOLEAN), function (Collection $items) {
             return $items->merge([
                 '--disable-gpu',
                 '--headless=new',
             ]);
         })->all());
+
+        $options->setExperimentalOption('prefs', ['credentials_enable_service' => false, 'profile.password_manager_enabled' => false]);
+        if ($binary = getenv('DUSK_CHROME_BINARY')) $options->setBinary($binary);
 
         return RemoteWebDriver::create(
             $_ENV['DUSK_DRIVER_URL'] ?? env('DUSK_DRIVER_URL') ?? 'http://localhost:9515',

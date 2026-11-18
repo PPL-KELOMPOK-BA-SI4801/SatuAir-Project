@@ -14,6 +14,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Str;
+use Illuminate\Database\QueryException;
 
 class UserController extends Controller
 {
@@ -38,7 +39,12 @@ class UserController extends Controller
             });
         }
 
-        $users = $query->paginate(20)->withQueryString();
+        try {
+            $users = $query->paginate(20)->withQueryString();
+        } catch (QueryException $exception) {
+            report($exception);
+            return response()->view('errors.database', ['message' => 'Data pengguna gagal dimuat. Silakan coba lagi.'], 503);
+        }
 
         return view('bendahara.users.index', compact('users'));
     }
@@ -68,7 +74,13 @@ class UserController extends Controller
     public function updateCustomerProfile(Request $request, User $user)
     {
         $this->authorizeCustomerProfile($user);
-        $user->update($this->validatedProfile($request, $user));
+        $validated = $this->validatedProfile($request, $user);
+        try {
+            $user->update($validated);
+        } catch (QueryException $exception) {
+            report($exception);
+            return back()->withInput()->withErrors(['database' => 'Perubahan gagal disimpan. Silakan coba lagi.']);
+        }
 
         return redirect()->route('bendahara.pengguna.show', $user)
             ->with('success', 'Data pelanggan berhasil diperbarui.');
